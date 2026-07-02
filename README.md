@@ -12,7 +12,7 @@ flowchart LR
     BE["Spring Boot API + @Scheduled job"]
     DB[(PostgreSQL)]
     DSA["demo-service-a (:8081, zdravá)"]
-    DSB["demo-service-b (:8082, /simulate-failure ve fázi 5)"]
+    DSB["demo-service-b (:8082, /simulate-failure)"]
 
     FE -- "REST" --> BE
     BE -- "SSE (server push)" --> FE
@@ -38,8 +38,10 @@ Frontend zbytek dat (historie, konfigurace) tahá klasicky přes REST.
 - **Flyway** — verzované DB migrace, žádné "magic" schema z Hibernate `ddl-auto`.
 - **Server-Sent Events (ne WebSocket)** — tok dat je jednosměrný (server → klient),
   SSE je jednodušší infrastruktura a běží nad běžným HTTP/HTTP2.
-- **React 18 + TypeScript + Vite** — rychlý dev feedback loop, typová bezpečnost
+- **React 19 + TypeScript + Vite** — rychlý dev feedback loop, typová bezpečnost
   na frontendu.
+- **Tailwind CSS + shadcn/ui styl + Recharts** — konzistentní dark-mode UI a
+  reálné grafy metrik v čase, ne jen textový výpis čísel.
 - **Docker + docker-compose** — jednotné a reprodukovatelné lokální prostředí.
 
 ## Struktura projektu
@@ -54,21 +56,36 @@ frontend/        React + TypeScript dashboard
 docs/            architektura, API design
 ```
 
-## Lokální spuštění (placeholder)
-
-> Plná implementace Docker/Compose setupu přijde ve Fázi 4. Zatím jde jen o skeleton.
+## Lokální spuštění
 
 ```bash
 cp .env.example .env
 # doplnit DB_USER / DB_PASSWORD v .env
-docker-compose up
+docker compose up --build postgres backend demo-service-a demo-service-b
+
+cd frontend
+cp .env.example .env   # výchozí VITE_API_BASE_URL sedí na docker-compose setup
+npm install
+npm run dev
 ```
 
-Backend poběží na `:8080`, frontend na `:5173`, PostgreSQL na `:5432`,
-`demo-service-a` na `:8081` a `demo-service-b` na `:8082`.
+Backend poběží na `:8080`, frontend (dev server) na `:5173`, PostgreSQL na `:5432`,
+`demo-service-a` na `:8081` a `demo-service-b` na `:8082`. Obě demo služby se
+zaregistrují samy (Flyway seed migrace) — po startu tedy stačí otevřít frontend,
+nic ručně přes API zakládat netřeba. Frontend zatím nemá vlastní Docker image
+(běží se přes `npm run dev`), viz sekce Status.
 
 ## Status
 
-🚧 **Projekt je ve fázi scaffoldingu.** Existuje adresářová struktura, konfigurační
-kostra a dokumentace — žádná business logika, REST endpointy ani UI komponenty
-zatím implementované nejsou. Následují Fáze 2 (backend) a Fáze 3 (frontend).
+✅ **Funkční, ne jen kostra.** Backend: CRUD pro služby/alerty, scheduler sbírající
+7 typů metrik (health, response time, CPU, paměť, disk, počet requestů, chybovost),
+skutečné vyhodnocování alertů (TRIGGERED/RESOLVED) a kurovaná časová osa událostí —
+vše přes REST i živě přes SSE. Frontend: Dashboard s grafem a živými feedy, Services
+a Alerts s formuláři, Events s časovou osou. Backend má i testy — unit (Mockito)
+i integrační (Testcontainers, reálný PostgreSQL + Flyway).
+
+**Vědomě chybí:**
+- CI pipeline (`.github/workflows/ci.yml` je jen placeholder)
+- Frontend Dockerfile (dev server funguje, produkční image ne)
+- `Metrics` stránka na frontendu (zatím stub)
+- Retention policy pro time-series data (metriky/eventy rostou bez limitu)

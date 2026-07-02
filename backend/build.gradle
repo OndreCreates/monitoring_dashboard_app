@@ -19,6 +19,11 @@ repositories {
 
 ext {
     mapstructVersion = '1.5.5.Final'
+    // Spring Boot 3.3.0 manages Testcontainers 1.19.8, whose bundled docker-java
+    // doesn't speak a new enough Docker Engine API for current Docker Desktop
+    // versions. Bump within the 1.x line (not the 2.x major) to stay a safe drop-in.
+    // Key name must match Spring Boot's dependency-management property exactly.
+    set('testcontainers.version', '1.21.4')
 }
 
 dependencies {

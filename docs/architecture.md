@@ -149,6 +149,24 @@ každém zapsání metriky ve scheduleru. Pro every `Alert` pravidlo se stejnou
 - jinak nic — záměrně, aby se nespamoval nový `AlertEvent` každý poll cyklus,
   dokud stav trvá.
 
+## Testy
+
+`AlertEvaluationServiceTest` a `ServiceServiceTest` jsou izolované unit testy
+(Mockito, žádná Spring kontext ani DB). `MonitoringDashboardApplicationTests`
+a `ServiceRepositoryIntegrationTest` běží proti reálnému PostgreSQL přes
+Testcontainers (`@ServiceConnection`) — ověřují i to, že Flyway migrace
+skutečně projdou, ne jen že se kód zkompiluje.
+
+⚠️ **Gotcha:** Spring Boot 3.3.0 spravuje Testcontainers `1.19.8`, jehož
+bundlovaný `docker-java` neumí mluvit s novějšími verzemi Docker Engine API
+(konkrétně: `BadRequestException` / "Could not find a valid Docker
+environment" i na správně nastaveném `DOCKER_HOST`). Řešení je override verze
+v `backend/build.gradle` přes `ext.set('testcontainers.version', '1.21.4')`
+(klíč musí být přesně `testcontainers.version` s tečkou, ne camelCase —
+to je název property, kterou čte Spring Boot dependency-management plugin).
+Pokud testy s Testcontainers znovu začnou padat na podobné chybě, tohle je
+první věc ke kontrole.
+
 ## Retence dat (known concern)
 
 Time-series metriky (`Metric`) budou časem růst bez omezení. Potřebují retention
