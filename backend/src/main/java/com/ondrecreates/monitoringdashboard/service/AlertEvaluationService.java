@@ -23,14 +23,17 @@ public class AlertEvaluationService {
     private final AlertRepository alertRepository;
     private final AlertEventRepository alertEventRepository;
     private final ServiceStatusBroadcaster broadcaster;
+    private final EventService eventService;
 
     public AlertEvaluationService(
             AlertRepository alertRepository,
             AlertEventRepository alertEventRepository,
-            ServiceStatusBroadcaster broadcaster) {
+            ServiceStatusBroadcaster broadcaster,
+            EventService eventService) {
         this.alertRepository = alertRepository;
         this.alertEventRepository = alertEventRepository;
         this.broadcaster = broadcaster;
+        this.eventService = eventService;
     }
 
     public void evaluate(Service service, String metricName, double value) {
@@ -53,12 +56,14 @@ public class AlertEvaluationService {
             event.setStatus(AlertEventStatus.TRIGGERED);
             alertEventRepository.save(event);
             broadcast(service, alert, event, event.getTriggeredAt());
+            eventService.recordAlertTriggered(service, alert, value);
         } else if (!breached && activeEvent.isPresent()) {
             AlertEvent event = activeEvent.get();
             event.setStatus(AlertEventStatus.RESOLVED);
             event.setResolvedAt(Instant.now());
             alertEventRepository.save(event);
             broadcast(service, alert, event, event.getResolvedAt());
+            eventService.recordAlertResolved(service, alert);
         }
         // breached && already TRIGGERED, or !breached && no active event: nothing to do —
         // avoids spamming a new AlertEvent on every poll cycle while the condition persists.

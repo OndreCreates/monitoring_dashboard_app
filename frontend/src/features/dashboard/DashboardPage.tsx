@@ -3,15 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/Ca
 import { Badge } from "@/shared/components/Badge";
 import { useServices } from "@/shared/hooks/useServices";
 import { useAlerts } from "@/shared/hooks/useAlerts";
-import { useServiceMetricsStream } from "@/shared/hooks/useServiceMetricsStream";
+import { useLiveEvents } from "@/shared/hooks/useLiveEvents";
 import { fetchServiceMetrics } from "@/api/services";
 import type { MetricResponse, ServiceResponse } from "@/api/types";
 import { formatMetricValue } from "@/shared/utils/formatMetric";
+import { ResponseTimeChart } from "@/features/dashboard/ResponseTimeChart";
 
 export function DashboardPage() {
   const { services, loading: servicesLoading, error: servicesError } = useServices();
   const { alerts, loading: alertsLoading } = useAlerts();
-  const metricEvents = useServiceMetricsStream();
+  const { metricEvents, alertEvents } = useLiveEvents();
 
   const kpis = [
     { label: "Monitored services", value: servicesLoading ? "…" : String(services.length) },
@@ -46,6 +47,47 @@ export function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-foreground">Response time</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponseTimeChart services={services} liveEvents={metricEvents} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-foreground">Alert activity (SSE)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {alertEvents.length === 0 ? (
+            <div className="flex h-24 items-center justify-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
+              Zatím žádná alert aktivita.
+            </div>
+          ) : (
+            <ul className="flex flex-col gap-2 text-sm">
+              {alertEvents.map((event, index) => (
+                <li
+                  key={`${event.alertId}-${event.timestamp}-${index}`}
+                  className="flex items-center justify-between rounded-md border border-border px-3 py-2"
+                >
+                  <Badge variant={event.status === "TRIGGERED" ? "destructive" : "success"}>
+                    {event.status}
+                  </Badge>
+                  <span className="font-medium">{event.serviceName}</span>
+                  <span className="text-muted-foreground">{event.metricName}</span>
+                  <span className="font-mono">{event.triggeringValue}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(event.timestamp).toLocaleTimeString("cs-CZ")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

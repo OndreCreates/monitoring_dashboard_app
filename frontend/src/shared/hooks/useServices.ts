@@ -6,6 +6,7 @@ export function useServices() {
   const [services, setServices] = useState<ServiceResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshIndex, setRefreshIndex] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -22,7 +23,9 @@ export function useServices() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshIndex]);
 
-  return { services, loading, error };
+  const refetch = () => setRefreshIndex((index) => index + 1);
+
+  return { services, loading, error, refetch };
 }

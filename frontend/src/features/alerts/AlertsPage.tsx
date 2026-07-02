@@ -2,12 +2,22 @@ import { type FormEvent, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/Card";
 import { Badge } from "@/shared/components/Badge";
 import { Button } from "@/shared/components/Button";
+import { Input } from "@/shared/components/Input";
+import { Select } from "@/shared/components/Select";
 import { useServices } from "@/shared/hooks/useServices";
 import { useAlerts } from "@/shared/hooks/useAlerts";
 import { createAlert, deleteAlert, fetchAlertEvents } from "@/api/alerts";
 import type { AlertComparison, AlertEventResponse } from "@/api/types";
 
-const METRIC_OPTIONS = ["response_time_ms", "health_status", "cpu_usage", "memory_used"];
+const METRIC_OPTIONS = [
+  "response_time_ms",
+  "health_status",
+  "cpu_usage",
+  "memory_used",
+  "disk_free",
+  "request_count",
+  "error_count",
+];
 
 export function AlertsPage() {
   const { services } = useServices();
@@ -62,8 +72,8 @@ export function AlertsPage() {
           <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
             <label className="flex flex-col gap-1 text-sm">
               Služba
-              <select
-                className="rounded-md border border-input bg-transparent px-2 py-1.5 text-sm"
+              <Select
+                className="w-44"
                 value={serviceId}
                 onChange={(event) =>
                   setServiceId(event.target.value === "" ? "" : Number(event.target.value))
@@ -78,13 +88,13 @@ export function AlertsPage() {
                     {service.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
 
             <label className="flex flex-col gap-1 text-sm">
               Metrika
-              <select
-                className="rounded-md border border-input bg-transparent px-2 py-1.5 text-sm"
+              <Select
+                className="w-44"
                 value={metricName}
                 onChange={(event) => setMetricName(event.target.value)}
               >
@@ -93,27 +103,27 @@ export function AlertsPage() {
                     {option}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
 
             <label className="flex flex-col gap-1 text-sm">
               Podmínka
-              <select
-                className="rounded-md border border-input bg-transparent px-2 py-1.5 text-sm"
+              <Select
+                className="w-36"
                 value={comparison}
                 onChange={(event) => setComparison(event.target.value as AlertComparison)}
               >
                 <option value="GREATER_THAN">větší než</option>
                 <option value="LESS_THAN">menší než</option>
-              </select>
+              </Select>
             </label>
 
             <label className="flex flex-col gap-1 text-sm">
               Práh
-              <input
+              <Input
                 type="number"
                 step="any"
-                className="w-28 rounded-md border border-input bg-transparent px-2 py-1.5 text-sm"
+                className="w-28"
                 value={threshold}
                 onChange={(event) => setThreshold(event.target.value)}
                 required

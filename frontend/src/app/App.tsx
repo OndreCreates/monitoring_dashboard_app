@@ -4,6 +4,7 @@ import { DashboardPage } from "@/features/dashboard/DashboardPage";
 import { ServicesPage } from "@/features/services/ServicesPage";
 import { MetricsPage } from "@/features/metrics/MetricsPage";
 import { AlertsPage } from "@/features/alerts/AlertsPage";
+import { EventsPage } from "@/features/events/EventsPage";
 
 const router = createBrowserRouter([
   {
@@ -14,6 +15,7 @@ const router = createBrowserRouter([
       { path: "services", element: <ServicesPage /> },
       { path: "metrics", element: <MetricsPage /> },
       { path: "alerts", element: <AlertsPage /> },
+      { path: "events", element: <EventsPage /> },
     ],
   },
 ]);

@@ -18,7 +18,10 @@ Konvence: všechny endpointy pod `/api/v1/...`, JSON, chyby ve formátu
 ## Metrics
 
 Read-only — metriky vznikají výhradně interně přes `MetricCollectorScheduler`
-(pull model, viz [architecture.md](architecture.md)), ne přes API.
+(pull model, viz [architecture.md](architecture.md)), ne přes API. Sbírané
+`name` hodnoty: `health_status`, `response_time_ms`, `cpu_usage`, `memory_used`,
+`disk_free`, `request_count`, `error_count` (poslední dva se objeví, jakmile
+existují — viz architecture.md).
 
 | Metoda | Cesta                                  | Popis                                  |
 |--------|-----------------------------------------|-----------------------------------------|
@@ -26,8 +29,7 @@ Read-only — metriky vznikají výhradně interně přes `MetricCollectorSchedu
 
 ## Alerts
 
-Pravidla spravuje uživatel — plné CRUD. Vyhodnocování pravidel (skutečné
-generování `AlertEvent`) je doménová logika odložená do Fáze 5.
+Pravidla spravuje uživatel — plné CRUD.
 
 | Metoda | Cesta                                  | Popis                        |
 |--------|------------------------------------------|-------------------------------|
@@ -40,20 +42,29 @@ generování `AlertEvent`) je doménová logika odložená do Fáze 5.
 
 ## Alert events
 
-Read-only — vznikají při vyhodnocení pravidla (Fáze 5).
+Read-only — vznikají při vyhodnocení pravidla (`AlertEvaluationService`).
 
 | Metoda | Cesta                              | Popis                          |
 |--------|--------------------------------------|---------------------------------|
 | GET    | `/api/v1/alerts/{alertId}/events`    | historie výskytů daného alertu |
 
+## Events (timeline)
+
+Read-only, kurovaná historie událostí (ne raw log) — viz architecture.md.
+
+| Metoda | Cesta                              | Popis                                      |
+|--------|--------------------------------------|---------------------------------------------|
+| GET    | `/api/v1/events`                     | posledních 50 událostí napříč všemi službami |
+| GET    | `/api/v1/services/{serviceId}/events`| historie událostí dané služby                |
+
 ## Real-time (SSE)
 
 | Metoda | Cesta                       | Popis                                                     |
 |--------|-----------------------------|------------------------------------------------------------|
-| GET    | `/api/v1/events/services`   | SSE stream, event `metric` s payloadem `ServiceMetricEvent` (serviceId, serviceName, metricName, value, recordedAt) pokaždé, když scheduler nasbírá novou metriku |
+| GET    | `/api/v1/events/services`   | SSE stream se třemi typy eventů: `metric` (`ServiceMetricEvent`), `alert` (`AlertEventNotification`), `event` (`EventNotification`) |
 
-## TODO (Fáze 5)
+## TODO
 
-- Skutečné vyhodnocování alert pravidel a generování `AlertEvent`.
-- Stránkování pro `GET /api/v1/services/{serviceId}/metrics` (zatím vrací
-  celou historii — pro portfolio rozsah OK, při reálném provozu by rostlo bez limitu).
+- Stránkování pro `GET /api/v1/services/{serviceId}/metrics` a `GET /api/v1/events`
+  (zatím vrací celou/omezenou historii bez skutečného stránkování — pro
+  portfolio rozsah OK, při reálném provozu by rostlo bez limitu).

@@ -25,18 +25,21 @@ public class MetricCollectorScheduler {
     private final RestClient restClient;
     private final ServiceStatusBroadcaster broadcaster;
     private final AlertEvaluationService alertEvaluationService;
+    private final EventService eventService;
 
     public MetricCollectorScheduler(
             ServiceRepository serviceRepository,
             MetricService metricService,
             RestClient restClient,
             ServiceStatusBroadcaster broadcaster,
-            AlertEvaluationService alertEvaluationService) {
+            AlertEvaluationService alertEvaluationService,
+            EventService eventService) {
         this.serviceRepository = serviceRepository;
         this.metricService = metricService;
         this.restClient = restClient;
         this.broadcaster = broadcaster;
         this.alertEvaluationService = alertEvaluationService;
+        this.eventService = eventService;
     }
 
     @Scheduled(fixedDelayString = "${monitoring.poll-interval-ms:30000}")
@@ -46,8 +49,15 @@ public class MetricCollectorScheduler {
 
     private void pollService(Service service) {
         pollHealthAndResponseTime(service);
-        pollActuatorMetric(service, "system.cpu.usage", "cpu_usage");
-        pollActuatorMetric(service, "jvm.memory.used", "memory_used");
+        pollActuatorMetric(service, "system.cpu.usage", "cpu_usage", "VALUE", null);
+        pollActuatorMetric(service, "jvm.memory.used", "memory_used", "VALUE", null);
+        pollActuatorMetric(service, "disk.free", "disk_free", "VALUE", null);
+        // Cumulative counters (total since the monitored service started), not a per-interval
+        // rate — our own polling traffic (health + metrics calls) is what's being counted here.
+        pollActuatorMetric(service, "http.server.requests", "request_count", "COUNT", null);
+        // 404s from Actuator until the first server error actually happens — that's fine,
+        // same "no value is better than a fake zero" rule as everything else here.
+        pollActuatorMetric(service, "http.server.requests", "error_count", "COUNT", "outcome:SERVER_ERROR");
     }
 
     private void pollHealthAndResponseTime(Service service) {
@@ -62,19 +72,21 @@ public class MetricCollectorScheduler {
         }
         long responseTimeMs = System.currentTimeMillis() - start;
 
+        eventService.recordHealthStatus(service, healthy);
         record(service, "health_status", healthy ? 1.0 : 0.0);
         if (healthy) {
             record(service, "response_time_ms", (double) responseTimeMs);
         }
     }
 
-    private void pollActuatorMetric(Service service, String actuatorMetricName, String recordedMetricName) {
+    private void pollActuatorMetric(
+            Service service, String actuatorMetricName, String recordedMetricName, String statistic, String tag) {
         try {
-            String metricsUrl = toMetricsUrl(service.getUrl(), actuatorMetricName);
+            String metricsUrl = toMetricsUrl(service.getUrl(), actuatorMetricName, tag);
             ActuatorMetricResponse response =
                     restClient.get().uri(metricsUrl).retrieve().body(ActuatorMetricResponse.class);
             double value = response.measurements().stream()
-                    .filter(measurement -> "VALUE".equals(measurement.statistic()))
+                    .filter(measurement -> statistic.equals(measurement.statistic()))
                     .findFirst()
                     .map(ActuatorMeasurement::value)
                     .orElseThrow();
@@ -92,10 +104,11 @@ public class MetricCollectorScheduler {
         alertEvaluationService.evaluate(service, metricName, value);
     }
 
-    /** Derives {@code <base>/actuator/metrics/<name>} from a service's health-check URL. */
-    private String toMetricsUrl(String healthUrl, String actuatorMetricName) {
+    /** Derives {@code <base>/actuator/metrics/<name>[?tag=...]} from a service's health-check URL. */
+    private String toMetricsUrl(String healthUrl, String actuatorMetricName, String tag) {
         String base = healthUrl.replaceFirst("/actuator/.*$", "");
-        return base + "/actuator/metrics/" + actuatorMetricName;
+        String url = base + "/actuator/metrics/" + actuatorMetricName;
+        return tag == null ? url : url + "?tag=" + tag;
     }
 
     private record ActuatorMetricResponse(List<ActuatorMeasurement> measurements) {}

@@ -5,6 +5,11 @@ export interface ServiceResponse {
   createdAt: string;
 }
 
+export interface ServiceRequest {
+  name: string;
+  url: string;
+}
+
 export interface MetricResponse {
   id: number;
   name: string;
@@ -60,4 +65,16 @@ export interface AlertEventNotification {
   triggeringValue: number;
   status: AlertEventStatus;
   timestamp: string;
+}
+
+export type EventType = "SERVICE_REGISTERED" | "HEALTH_UP" | "HEALTH_DOWN" | "ALERT_TRIGGERED" | "ALERT_RESOLVED";
+
+/** Shape shared by GET /api/v1/events and the `event` SSE payload (backend EventNotification). */
+export interface EventResponse {
+  id: number;
+  serviceId: number;
+  serviceName: string;
+  type: EventType;
+  message: string;
+  occurredAt: string;
 }

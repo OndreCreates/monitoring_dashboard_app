@@ -13,9 +13,11 @@ import org.springframework.stereotype.Component;
 public class ServiceService {
 
     private final ServiceRepository serviceRepository;
+    private final EventService eventService;
 
-    public ServiceService(ServiceRepository serviceRepository) {
+    public ServiceService(ServiceRepository serviceRepository, EventService eventService) {
         this.serviceRepository = serviceRepository;
+        this.eventService = eventService;
     }
 
     public List<Service> findAll() {
@@ -32,7 +34,9 @@ public class ServiceService {
         Service service = new Service();
         service.setName(request.name());
         service.setUrl(request.url());
-        return serviceRepository.save(service);
+        Service saved = serviceRepository.save(service);
+        eventService.recordServiceRegistered(saved);
+        return saved;
     }
 
     public Service update(Long id, ServiceRequest request) {

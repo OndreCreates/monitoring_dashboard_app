@@ -96,6 +96,59 @@ nevyžaduje migraci ani změnu entity, jen novou volání ve scheduleru.
 SSE broadcaster (`ServiceStatusBroadcaster`) je od začátku generický podle
 `metric.getName()`, takže žádnou úpravu pro nové metriky nepotřeboval.
 
+**Rozšíření (produktová vize — "monitoring platforma pro moderní webové
+aplikace"):** aby appka odpovídala reálnějšímu use case (víc než jen
+CPU/RAM), scheduler navíc sbírá:
+- `disk_free` — `/actuator/metrics/disk.free`, stejný vzorec jako cpu/memory.
+- `request_count` — kumulativní `COUNT` z `/actuator/metrics/http.server.requests`
+  (bez tagu). Je to *kumulativní čítač celkového provozu*, ne "requestů za
+  poslední interval" — počítá se do něj i provoz, který na monitorovanou
+  službu generuje sám náš scheduler (health checky, metrics polling).
+- `error_count` — stejný endpoint s `?tag=outcome:SERVER_ERROR`. Dokud
+  nenastala první chyba, Actuator na tenhle tag vrací 404 — scheduler to
+  bere stejně jako ostatní chyby (metrika se pro ten cyklus prostě vynechá).
+
+⚠️ **Známá nekonzistence:** `cpu_usage` čte `system.cpu.usage` (zátěž **celého
+systému/kontejneru**), zatímco `memory_used` čte `jvm.memory.used` (paměť
+**konkrétní té appky**). Kdyby šlo o skutečně srovnatelné metriky, `cpu_usage`
+by měl číst `process.cpu.usage` místo `system.cpu.usage`. Zatím to necháváme
+takhle, ale je to vědomý dluh, ne přehlédnutí.
+
+## Historie událostí (Event)
+
+Kromě time-series metrik appka vede i **kurovanou časovou osu událostí**
+(entita `Event`) — ne syrové čtení stdout logu monitorovaných služeb.
+Důvod: Actuator sám o sobě "tail logu" nedává (vyžadovalo by to zapnout
+`/actuator/logfile` a fyzicky zapisovat log soubor), a i kdyby, byla by to
+hlavně stěna Tomcat/Hibernate INFO řádků — pro portfolio demo nezajímavé.
+Místo toho `EventService` zaznamenává strukturované, smysluplné momenty,
+které backend už tak jako tak sleduje:
+
+- `SERVICE_REGISTERED` — při vytvoření přes `POST /api/v1/services`
+  (seed data přes Flyway migraci tenhle event nemají, protože nejdou přes
+  `ServiceService.create()`).
+- `HEALTH_UP` / `HEALTH_DOWN` — detekce přechodu stavu, ne každý poll.
+  Poslední známý stav se drží v in-memory mapě ve `EventService` (ne v DB),
+  aby hlavní polling cyklus zůstal levný — po restartu backendu se tak první
+  poll každé služby nepočítá jako "přechod" (nemáme s čím srovnat).
+- `ALERT_TRIGGERED` / `ALERT_RESOLVED` — zrcadlí `AlertEvent` lifecycle.
+
+Broadcast přes nový SSE event typ `event` (vedle existujících `metric` a
+`alert`), stejný `ServiceStatusBroadcaster`.
+
+## Vyhodnocování alertů
+
+`AlertEvaluationService.evaluate(service, metricName, value)` se volá po
+každém zapsání metriky ve scheduleru. Pro every `Alert` pravidlo se stejnou
+`Service` + `metricName`, které je `enabled`:
+
+- pokud hodnota poruší `threshold` (`GREATER_THAN`/`LESS_THAN`) a **není**
+  už otevřený `TRIGGERED` `AlertEvent` → založí se nový,
+- pokud hodnota přestane porušovat threshold a **existuje** otevřený
+  `TRIGGERED` event → přepne se na `RESOLVED` (`resolvedAt` vyplní),
+- jinak nic — záměrně, aby se nespamoval nový `AlertEvent` každý poll cyklus,
+  dokud stav trvá.
+
 ## Retence dat (known concern)
 
 Time-series metriky (`Metric`) budou časem růst bez omezení. Potřebují retention
@@ -106,10 +159,9 @@ aby se na něj nezapomnělo.
 
 ## TODO — rozhodnutí odložená na pozdější fáze
 
-- **Fáze 5 (doménová logika):** vyhodnocování alert pravidel (thresholds,
-  time windows) — porovnání nasbíraných metrik s `Alert` pravidly a
-  generování `AlertEvent`. Metriky i `/simulate-failure` už existují
-  (Fáze 5a), chybí jen samotné vyhodnocení. Dál: retention policy pro
-  metriky, případně agregace/downsampling.
+- **Retention policy** pro metriky (a časem i events) — mazání/agregace
+  starých dat, konkrétní implementace zatím otevřená.
+- **Frontend** zatím nezobrazuje `disk_free`/`request_count`/`error_count`
+  ani `Event` timeline — to je samostatný krok.
 - **Fáze 4 (docker/CI):** funkční frontend Dockerfile a CI pipeline —
-  teď jsou jen placeholdery.
+  teď jsou jen placeholdery. Chybí i testy (JUnit/Mockito/Testcontainers).

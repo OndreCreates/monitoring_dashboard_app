@@ -43,4 +43,14 @@ public class ServiceStatusBroadcaster {
             }
         }
     }
+
+    public void broadcastEvent(EventNotification notification) {
+        for (SseEmitter emitter : emitters) {
+            try {
+                emitter.send(SseEmitter.event().name("event").data(notification));
+            } catch (Exception ex) {
+                emitters.remove(emitter);
+            }
+        }
+    }
 }

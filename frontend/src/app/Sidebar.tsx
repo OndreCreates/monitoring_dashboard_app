@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Activity, BellRing, LayoutDashboard, Server } from "lucide-react";
+import { Activity, BellRing, History, LayoutDashboard, Server } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -7,6 +7,7 @@ const navItems = [
   { to: "/services", label: "Services", icon: Server },
   { to: "/metrics", label: "Metrics", icon: Activity },
   { to: "/alerts", label: "Alerts", icon: BellRing },
+  { to: "/events", label: "Events", icon: History },
 ];
 
 export function Sidebar() {
