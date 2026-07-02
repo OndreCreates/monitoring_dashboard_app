@@ -47,10 +47,21 @@ monitoring netestoval nic reálného, jen by volal metody v rámci jednoho JVM.
 - **demo-service-a** simuluje normální, zdravý provoz. Běží na portu `8081`,
   závislosti jen Spring Boot Web + Actuator (žádná DB/JPA — je to "hloupá"
   simulace, ne skutečná služba).
-- **demo-service-b** běží na portu `8082` a v budoucnu (Fáze 5) přibude
-  endpoint `/simulate-failure`, kterým bude možné manuálně vyvolat degradovaný
-  stav a předvést vyhodnocení alert pravidel. Teď má jen Actuator health,
-  žádný vlastní controller.
+- **demo-service-b** běží na portu `8082` a má `POST /simulate-failure` —
+  na 60 sekund přepne interní `HealthIndicator` do stavu DOWN (self-expiring
+  podle uloženého deadline, žádný scheduled reset job), takže `/actuator/health`
+  po tu dobu vrací DOWN a pak se sám vrátí na UP. Demonstruje vyhodnocení
+  alert pravidel (Fáze 5) bez nutnosti službu skutečně shazovat.
+
+Obě demo služby mají v `application.yml` exponovaný i Actuator `metrics`
+endpoint (`/actuator/metrics/{name}`), aby z nich backend mohl číst CPU/paměť
+(viz sekce Sběr metrik níže).
+
+**Seed dat:** oba demo servisy jsou vloženy Flyway migrací `V2__seed_demo_services.sql`,
+aby `docker-compose up` fungoval jako kompletní demo bez ručního
+`POST /api/v1/services` kroku. Obecná registrace monitorovaných služeb pro
+reálné použití pořád jde přes API, ne přes migrace — tohle je výjimka jen
+pro tyhle dvě demo služby, co jsou součástí repa.
 
 ### Sběr metrik: pull model
 Backend aktivně obchází monitorované služby přes scheduled job (`@Scheduled`)
@@ -70,6 +81,21 @@ entity `Service.url`). Registrace monitorovaných služeb tedy jde přes API
 (`POST /api/v1/services`), ne přes env proměnné — jednodušší a rozšiřitelnější
 (přidání nové monitorované služby nevyžaduje redeploy backendu).
 
+**Rozšíření (Fáze 5a):** kromě `response_time_ms` scheduler sbírá i:
+- `health_status` — `1.0`/`0.0`, zaznamená se při **každém** pollu (i když
+  health check selže — to je jediná metrika, kde chyba znamená zapsat `0.0`,
+  ne metriku vynechat, protože jinak by "službа je down" nešlo z dat vůbec poznat).
+- `cpu_usage`, `memory_used` — čtené z `/actuator/metrics/system.cpu.usage`
+  a `/actuator/metrics/jvm.memory.used` na monitorované službě (URL odvozená
+  z `Service.url` odseknutím `/actuator/health` a připojením `/actuator/metrics/{name}`).
+  Při chybě (služba nedostupná, endpoint neexistuje) se metrika prostě
+  vynechá pro daný cyklus — žádná hodnota je lepší než zavádějící nula.
+
+`Metric.name` je obyčejný `String`, ne enum — přidání dalšího typu metriky
+nevyžaduje migraci ani změnu entity, jen novou volání ve scheduleru.
+SSE broadcaster (`ServiceStatusBroadcaster`) je od začátku generický podle
+`metric.getName()`, takže žádnou úpravu pro nové metriky nepotřeboval.
+
 ## Retence dat (known concern)
 
 Time-series metriky (`Metric`) budou časem růst bez omezení. Potřebují retention
@@ -81,7 +107,9 @@ aby se na něj nezapomnělo.
 ## TODO — rozhodnutí odložená na pozdější fáze
 
 - **Fáze 5 (doménová logika):** vyhodnocování alert pravidel (thresholds,
-  time windows), retention policy pro metriky, případně agregace/downsampling,
-  implementace `/simulate-failure` na `demo-service-b`.
-- **Fáze 4 (docker/CI):** plná podoba Dockerfilů, docker-compose zdraví-checků
-  a CI pipeline — teď jsou jen placeholdery.
+  time windows) — porovnání nasbíraných metrik s `Alert` pravidly a
+  generování `AlertEvent`. Metriky i `/simulate-failure` už existují
+  (Fáze 5a), chybí jen samotné vyhodnocení. Dál: retention policy pro
+  metriky, případně agregace/downsampling.
+- **Fáze 4 (docker/CI):** funkční frontend Dockerfile a CI pipeline —
+  teď jsou jen placeholdery.

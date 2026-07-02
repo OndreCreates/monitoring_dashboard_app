@@ -6,6 +6,7 @@ import { useAlerts } from "@/shared/hooks/useAlerts";
 import { useServiceMetricsStream } from "@/shared/hooks/useServiceMetricsStream";
 import { fetchServiceMetrics } from "@/api/services";
 import type { MetricResponse, ServiceResponse } from "@/api/types";
+import { formatMetricValue } from "@/shared/utils/formatMetric";
 
 export function DashboardPage() {
   const { services, loading: servicesLoading, error: servicesError } = useServices();
@@ -64,7 +65,13 @@ export function DashboardPage() {
                 >
                   <span className="font-medium">{event.serviceName}</span>
                   <span className="text-muted-foreground">{event.metricName}</span>
-                  <span className="font-mono">{event.value.toFixed(1)} ms</span>
+                  {event.metricName === "health_status" ? (
+                    <Badge variant={event.value === 1 ? "success" : "destructive"}>
+                      {formatMetricValue(event.metricName, event.value)}
+                    </Badge>
+                  ) : (
+                    <span className="font-mono">{formatMetricValue(event.metricName, event.value)}</span>
+                  )}
                   <span className="text-xs text-muted-foreground">
                     {new Date(event.recordedAt).toLocaleTimeString("cs-CZ")}
                   </span>
@@ -107,7 +114,11 @@ function ServiceRow({ service }: { service: ServiceResponse }) {
     let cancelled = false;
     fetchServiceMetrics(service.id)
       .then((metrics) => {
-        if (!cancelled) setLatestMetric(metrics[0] ?? null);
+        // Scheduler now records health_status/cpu_usage/memory_used alongside
+        // response_time_ms per cycle — pick that one specifically, not just
+        // the most recent metric of any type.
+        const latestResponseTime = metrics.find((metric) => metric.name === "response_time_ms") ?? null;
+        if (!cancelled) setLatestMetric(latestResponseTime);
       })
       .catch(() => {
         if (!cancelled) setLatestMetric(null);

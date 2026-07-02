@@ -12,4 +12,6 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info
+        # "metrics" exposed so the monitoring backend can poll
+        # /actuator/metrics/{name} for CPU/memory data.
+        include: health, info, metrics

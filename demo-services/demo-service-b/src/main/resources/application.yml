@@ -1,5 +1,5 @@
-# demo-service-b — do budoucna nese /simulate-failure endpoint (fáze 5)
-# pro demonstraci alertingu. Teď jen Actuator health, žádný vlastní controller.
+# demo-service-b — nese /simulate-failure endpoint pro demonstraci alertingu
+# (viz FailureSimulationController / FailureSimulationHealthIndicator).
 
 spring:
   application:
@@ -12,4 +12,6 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info
+        # "metrics" exposed so the monitoring backend can poll
+        # /actuator/metrics/{name} for CPU/memory data.
+        include: health, info, metrics
