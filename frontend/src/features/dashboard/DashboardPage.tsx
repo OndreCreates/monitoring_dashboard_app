@@ -1,14 +1,23 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/Card";
 import { Badge } from "@/shared/components/Badge";
-import { Tabs, TabsList, TabsTrigger } from "@/shared/components/Tabs";
-
-const kpis = [
-  { label: "Monitored services", value: "—" },
-  { label: "Active alerts", value: "—" },
-  { label: "Services healthy", value: "—" },
-];
+import { useServices } from "@/shared/hooks/useServices";
+import { useAlerts } from "@/shared/hooks/useAlerts";
+import { useServiceMetricsStream } from "@/shared/hooks/useServiceMetricsStream";
+import { fetchServiceMetrics } from "@/api/services";
+import type { MetricResponse, ServiceResponse } from "@/api/types";
 
 export function DashboardPage() {
+  const { services, loading: servicesLoading, error: servicesError } = useServices();
+  const { alerts, loading: alertsLoading } = useAlerts();
+  const metricEvents = useServiceMetricsStream();
+
+  const kpis = [
+    { label: "Monitored services", value: servicesLoading ? "…" : String(services.length) },
+    { label: "Alert rules", value: alertsLoading ? "…" : String(alerts.length) },
+    { label: "Live metrics received", value: String(metricEvents.length) },
+  ];
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -17,6 +26,12 @@ export function DashboardPage() {
           Přehled monitorovaných služeb a jejich stavu v reálném čase.
         </p>
       </div>
+
+      {servicesError && (
+        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          Nepodařilo se načíst data z backendu ({servicesError}). Běží backend na správné adrese?
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {kpis.map((kpi) => (
@@ -32,20 +47,31 @@ export function DashboardPage() {
       </div>
 
       <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-base font-semibold text-foreground">Response time</CardTitle>
-          <Tabs defaultValue="1d">
-            <TabsList>
-              <TabsTrigger value="1d">1d</TabsTrigger>
-              <TabsTrigger value="1w">1w</TabsTrigger>
-              <TabsTrigger value="1m">1m</TabsTrigger>
-            </TabsList>
-          </Tabs>
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-foreground">Live metrics (SSE)</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex h-48 items-center justify-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
-            Graf metrik — napojíme na SSE stream v další fázi
-          </div>
+          {metricEvents.length === 0 ? (
+            <div className="flex h-32 items-center justify-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
+              Zatím žádné metriky — počkej na první tik schedulera (výchozí interval 30s).
+            </div>
+          ) : (
+            <ul className="flex flex-col gap-2 text-sm">
+              {metricEvents.map((event, index) => (
+                <li
+                  key={`${event.serviceId}-${event.recordedAt}-${index}`}
+                  className="flex items-center justify-between rounded-md border border-border px-3 py-2"
+                >
+                  <span className="font-medium">{event.serviceName}</span>
+                  <span className="text-muted-foreground">{event.metricName}</span>
+                  <span className="font-mono">{event.value.toFixed(1)} ms</span>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(event.recordedAt).toLocaleTimeString("cs-CZ")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
 
@@ -54,12 +80,54 @@ export function DashboardPage() {
           <CardTitle className="text-base font-semibold text-foreground">Services</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
-            <span>Seznam služeb — napojíme na REST API v další fázi</span>
-            <Badge variant="secondary">TODO</Badge>
-          </div>
+          {servicesLoading ? (
+            <p className="text-sm text-muted-foreground">Načítám…</p>
+          ) : services.length === 0 ? (
+            <div className="flex items-center justify-between rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
+              <span>Zatím žádná registrovaná služba (POST /api/v1/services).</span>
+              <Badge variant="secondary">0 služeb</Badge>
+            </div>
+          ) : (
+            <ul className="flex flex-col gap-2 text-sm">
+              {services.map((service) => (
+                <ServiceRow key={service.id} service={service} />
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function ServiceRow({ service }: { service: ServiceResponse }) {
+  const [latestMetric, setLatestMetric] = useState<MetricResponse | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchServiceMetrics(service.id)
+      .then((metrics) => {
+        if (!cancelled) setLatestMetric(metrics[0] ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setLatestMetric(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [service.id]);
+
+  return (
+    <li className="flex items-center justify-between rounded-md border border-border px-3 py-2">
+      <div className="flex flex-col">
+        <span className="font-medium">{service.name}</span>
+        <span className="text-xs text-muted-foreground">{service.url}</span>
+      </div>
+      {latestMetric ? (
+        <Badge variant="success">{latestMetric.value.toFixed(0)} ms</Badge>
+      ) : (
+        <Badge variant="secondary">no data</Badge>
+      )}
+    </li>
   );
 }
