@@ -1,0 +1,5 @@
+rootProject.name = 'monitoring-dashboard'
+
+include 'backend'
+include 'demo-services:demo-service-a'
+include 'demo-services:demo-service-b'

@@ -1,0 +1,21 @@
+# Common configuration shared by all profiles.
+# Environment-specific values (DB connection, secrets) live in
+# application-dev.yml / application-prod.yml and are always sourced from env vars.
+
+spring:
+  application:
+    name: monitoring-dashboard-backend
+  profiles:
+    active: ${SPRING_PROFILE:dev}
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: when-authorized

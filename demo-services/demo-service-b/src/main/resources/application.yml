@@ -1,0 +1,15 @@
+# demo-service-b — do budoucna nese /simulate-failure endpoint (fáze 5)
+# pro demonstraci alertingu. Teď jen Actuator health, žádný vlastní controller.
+
+spring:
+  application:
+    name: demo-service-b
+
+server:
+  port: 8082
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info

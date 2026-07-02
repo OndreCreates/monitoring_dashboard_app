@@ -1,0 +1,15 @@
+# demo-service-a — simuluje normální provoz (stabilní, zdravá služba).
+# Health je zatím čistě ze Spring Boot Actuatoru, žádný vlastní controller.
+
+spring:
+  application:
+    name: demo-service-a
+
+server:
+  port: 8081
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
