@@ -9,4 +9,6 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
     List<Alert> findByServiceId(Long serviceId);
 
     List<Alert> findByEnabledTrue();
+
+    List<Alert> findByServiceIdAndMetricNameAndEnabledTrue(Long serviceId, String metricName);
 }

@@ -24,16 +24,19 @@ public class MetricCollectorScheduler {
     private final MetricService metricService;
     private final RestClient restClient;
     private final ServiceStatusBroadcaster broadcaster;
+    private final AlertEvaluationService alertEvaluationService;
 
     public MetricCollectorScheduler(
             ServiceRepository serviceRepository,
             MetricService metricService,
             RestClient restClient,
-            ServiceStatusBroadcaster broadcaster) {
+            ServiceStatusBroadcaster broadcaster,
+            AlertEvaluationService alertEvaluationService) {
         this.serviceRepository = serviceRepository;
         this.metricService = metricService;
         this.restClient = restClient;
         this.broadcaster = broadcaster;
+        this.alertEvaluationService = alertEvaluationService;
     }
 
     @Scheduled(fixedDelayString = "${monitoring.poll-interval-ms:30000}")
@@ -86,6 +89,7 @@ public class MetricCollectorScheduler {
     private void record(Service service, String metricName, double value) {
         Metric metric = metricService.record(service, metricName, value);
         broadcaster.broadcastMetric(service, metric);
+        alertEvaluationService.evaluate(service, metricName, value);
     }
 
     /** Derives {@code <base>/actuator/metrics/<name>} from a service's health-check URL. */

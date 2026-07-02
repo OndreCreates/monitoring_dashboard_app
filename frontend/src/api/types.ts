@@ -23,6 +23,14 @@ export interface AlertResponse {
   enabled: boolean;
 }
 
+export interface AlertRequest {
+  serviceId: number;
+  metricName: string;
+  threshold: number;
+  comparison: AlertComparison;
+  enabled: boolean;
+}
+
 export type AlertEventStatus = "TRIGGERED" | "RESOLVED";
 
 export interface AlertEventResponse {
@@ -41,4 +49,15 @@ export interface ServiceMetricEvent {
   metricName: string;
   value: number;
   recordedAt: string;
+}
+
+/** Payload pushed over the `alert` SSE event — viz backend AlertEventNotification. */
+export interface AlertEventNotification {
+  alertId: number;
+  serviceId: number;
+  serviceName: string;
+  metricName: string;
+  triggeringValue: number;
+  status: AlertEventStatus;
+  timestamp: string;
 }

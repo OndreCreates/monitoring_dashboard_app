@@ -6,6 +6,7 @@ export function useAlerts() {
   const [alerts, setAlerts] = useState<AlertResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshIndex, setRefreshIndex] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -22,7 +23,9 @@ export function useAlerts() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshIndex]);
 
-  return { alerts, loading, error };
+  const refetch = () => setRefreshIndex((index) => index + 1);
+
+  return { alerts, loading, error, refetch };
 }
