@@ -11,9 +11,17 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     env_file:
       - .env
+    environment:
+      # Inside the compose network the DB is reachable by service name, not
+      # "localhost" from .env (that value is for running the backend directly
+      # on the host machine instead).
+      DB_HOST: postgres
+      DB_PORT: 5432
     ports:
       - "8080:8080"
     depends_on:
@@ -22,12 +30,16 @@ services:
       - demo-service-b
 
   demo-service-a:
-    build: ./demo-services/demo-service-a
+    build:
+      context: .
+      dockerfile: demo-services/demo-service-a/Dockerfile
     ports:
       - "8081:8081"
 
   demo-service-b:
-    build: ./demo-services/demo-service-b
+    build:
+      context: .
+      dockerfile: demo-services/demo-service-b/Dockerfile
     ports:
       - "8082:8082"
 
