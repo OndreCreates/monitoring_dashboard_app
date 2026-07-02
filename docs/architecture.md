@@ -64,6 +64,12 @@ frekvencí sběru) a pro rozsah portfolia dostatečné.
 Toto rozhodnutí ovlivňuje strukturu `service/` balíčku ve Fázi 2 — bude obsahovat
 scheduler component (např. `MetricCollectorScheduler`), ne ingestion controller.
 
+**Implementace (Fáze 2):** `MetricCollectorScheduler` neobchází natvrdo dvě
+demo URL — obchází generic `List<Service>` z databáze (adresa je součástí
+entity `Service.url`). Registrace monitorovaných služeb tedy jde přes API
+(`POST /api/v1/services`), ne přes env proměnné — jednodušší a rozšiřitelnější
+(přidání nové monitorované služby nevyžaduje redeploy backendu).
+
 ## Retence dat (known concern)
 
 Time-series metriky (`Metric`) budou časem růst bez omezení. Potřebují retention
@@ -74,9 +80,6 @@ aby se na něj nezapomnělo.
 
 ## TODO — rozhodnutí odložená na pozdější fáze
 
-- **Fáze 2 (backend):** konkrétní tvar DTOs, mapperů a REST endpointů — viz
-  [api.md](api.md), zatím jen kostra. Součástí bude i konfigurace URL adres
-  demo služeb pro scheduler (přes env proměnné).
 - **Fáze 5 (doménová logika):** vyhodnocování alert pravidel (thresholds,
   time windows), retention policy pro metriky, případně agregace/downsampling,
   implementace `/simulate-failure` na `demo-service-b`.

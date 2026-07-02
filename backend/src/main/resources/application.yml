@@ -19,3 +19,7 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+
+# Pull-model metric collection interval (see docs/architecture.md).
+monitoring:
+  poll-interval-ms: 30000
