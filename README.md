@@ -72,20 +72,19 @@ npm run dev
 Backend poběží na `:8080`, frontend (dev server) na `:5173`, PostgreSQL na `:5432`,
 `demo-service-a` na `:8081` a `demo-service-b` na `:8082`. Obě demo služby se
 zaregistrují samy (Flyway seed migrace) — po startu tedy stačí otevřít frontend,
-nic ručně přes API zakládat netřeba. Frontend zatím nemá vlastní Docker image
-(běží se přes `npm run dev`), viz sekce Status.
+nic ručně přes API zakládat netřeba. Frontend má i produkční Docker image
+(`frontend/Dockerfile`, nginx), viz `docker-compose.yml`.
 
 ## Status
 
 ✅ **Funkční, ne jen kostra.** Backend: CRUD pro služby/alerty, scheduler sbírající
 7 typů metrik (health, response time, CPU, paměť, disk, počet requestů, chybovost),
 skutečné vyhodnocování alertů (TRIGGERED/RESOLVED) a kurovaná časová osa událostí —
-vše přes REST i živě přes SSE. Frontend: Dashboard s grafem a živými feedy, Services
-a Alerts s formuláři, Events s časovou osou. Backend má i testy — unit (Mockito)
-i integrační (Testcontainers, reálný PostgreSQL + Flyway).
-
-**Vědomě chybí:**
-- CI pipeline (`.github/workflows/ci.yml` je jen placeholder)
-- Frontend Dockerfile (dev server funguje, produkční image ne)
-- `Metrics` stránka na frontendu (zatím stub)
-- Retention policy pro time-series data (metriky/eventy rostou bez limitu)
+vše přes REST i živě přes SSE. `GET /metrics` a `GET /events` jsou stránkované
+(`PageResponse<T>`, volitelný `name` filtr u metrik). Frontend: Dashboard s grafem
+a živými feedy, Services a Alerts s formuláři, Events s časovou osou, Metrics
+stránka s grafy pro všech 7 typů metrik, Settings (světlý/tmavý/systémový motiv,
+délka historie grafů), responsivní layout s mobilní navigací. Backend má i testy — unit (Mockito)
+i integrační (Testcontainers, reálný PostgreSQL + Flyway) — a CI pipeline
+(GitHub Actions: build+test backend, lint+build frontend). Retention policy
+(`RetentionCleanupScheduler`) drží velikost metrik/eventů pod kontrolou.

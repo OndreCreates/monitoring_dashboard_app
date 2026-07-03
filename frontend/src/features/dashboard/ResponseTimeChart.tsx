@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { fetchServiceMetrics } from "@/api/services";
 import type { ServiceMetricEvent, ServiceResponse } from "@/api/types";
+import { useSettings } from "@/shared/context/SettingsContext";
 
 const LINE_COLORS = ["#8b5cf6", "#22d3ee", "#f97316", "#34d399", "#f472b6"];
-const MAX_POINTS = 20;
 
 export function ResponseTimeChart({
   services,
@@ -13,6 +13,8 @@ export function ResponseTimeChart({
   services: ServiceResponse[];
   liveEvents: ServiceMetricEvent[];
 }) {
+  const { chartPoints } = useSettings();
+
   // REST-fetched baseline, set once per service list — live SSE events are
   // merged in at render time via useMemo below, not accumulated in state,
   // so there's no setState-in-effect on every incoming event.
@@ -23,13 +25,9 @@ export function ResponseTimeChart({
     let cancelled = false;
     Promise.all(
       services.map((service) =>
-        fetchServiceMetrics(service.id).then((metrics) => ({
+        fetchServiceMetrics(service.id, { name: "response_time_ms", size: chartPoints }).then((metrics) => ({
           id: service.id,
-          values: metrics
-            .filter((metric) => metric.name === "response_time_ms")
-            .slice(0, MAX_POINTS)
-            .reverse()
-            .map((metric) => metric.value),
+          values: metrics.reverse().map((metric) => metric.value),
         })),
       ),
     ).then((results) => {
@@ -43,7 +41,7 @@ export function ResponseTimeChart({
     return () => {
       cancelled = true;
     };
-  }, [services]);
+  }, [services, chartPoints]);
 
   const data = useMemo(() => {
     const merged: Record<number, number[]> = {};
@@ -56,7 +54,7 @@ export function ResponseTimeChart({
       arr.push(event.value);
     }
     for (const id of Object.keys(merged)) {
-      merged[Number(id)] = merged[Number(id)].slice(-MAX_POINTS);
+      merged[Number(id)] = merged[Number(id)].slice(-chartPoints);
     }
 
     const maxLen = Math.max(0, ...Object.values(merged).map((values) => values.length));
@@ -70,7 +68,7 @@ export function ResponseTimeChart({
       }
       return point;
     });
-  }, [services, history, liveEvents]);
+  }, [services, history, liveEvents, chartPoints]);
 
   if (data.length === 0) {
     return (

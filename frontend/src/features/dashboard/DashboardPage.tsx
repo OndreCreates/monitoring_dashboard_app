@@ -154,13 +154,11 @@ function ServiceRow({ service }: { service: ServiceResponse }) {
 
   useEffect(() => {
     let cancelled = false;
-    fetchServiceMetrics(service.id)
+    // name filter matters now that /metrics is paginated — without it we'd get
+    // the last 20 metrics of ANY type, which might not include response_time_ms at all.
+    fetchServiceMetrics(service.id, { name: "response_time_ms", size: 1 })
       .then((metrics) => {
-        // Scheduler now records health_status/cpu_usage/memory_used alongside
-        // response_time_ms per cycle — pick that one specifically, not just
-        // the most recent metric of any type.
-        const latestResponseTime = metrics.find((metric) => metric.name === "response_time_ms") ?? null;
-        if (!cancelled) setLatestMetric(latestResponseTime);
+        if (!cancelled) setLatestMetric(metrics[0] ?? null);
       })
       .catch(() => {
         if (!cancelled) setLatestMetric(null);

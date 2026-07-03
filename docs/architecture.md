@@ -166,19 +166,29 @@ to je název property, kterou čte Spring Boot dependency-management plugin).
 Pokud testy s Testcontainers znovu začnou padat na podobné chybě, tohle je
 první věc ke kontrole.
 
-## Retence dat (known concern)
+## Retence dat
 
-Time-series metriky (`Metric`) budou časem růst bez omezení. Potřebují retention
-policy (např. mazání/agregace dat starších než N dní), ale konkrétní implementace
-(scheduled cleanup job, partitioning, downsampling...) je otevřená a bude řešena
-až ve Fázi 5, kdy vznikne doménová logika. Zmiňuje se zde jen jako známé riziko,
-aby se na něj nezapomnělo.
+Time-series metriky a eventy by jinak rostly bez omezení. Řeší to
+`RetentionCleanupScheduler` — stejný `@Scheduled` pattern jako
+`MetricCollectorScheduler`, jen s denním cronem místo `fixedDelay`:
 
-## TODO — rozhodnutí odložená na pozdější fáze
+```java
+@Scheduled(cron = "${retention.cleanup-cron:0 0 3 * * *}")
+public void cleanup() {
+    long deletedMetrics = metricRepository.deleteByRecordedAtBefore(metricsCutoff);
+    long deletedEvents = eventRepository.deleteByOccurredAtBefore(eventsCutoff);
+    ...
+}
+```
 
-- **Retention policy** pro metriky (a časem i events) — mazání/agregace
-  starých dat, konkrétní implementace zatím otevřená.
-- **Frontend** zatím nezobrazuje `disk_free`/`request_count`/`error_count`
-  ani `Event` timeline — to je samostatný krok.
-- **Fáze 4 (docker/CI):** funkční frontend Dockerfile a CI pipeline —
-  teď jsou jen placeholdery. Chybí i testy (JUnit/Mockito/Testcontainers).
+Retenční okna se liší podle povahy dat (konfigurovatelné v `application.yml`,
+klíč `retention.*`):
+- **metriky: 7 dní** — 7 typů metrik na každý tik schedulera (výchozí 30s)
+  znamená velký objem řádků s malou informační hodnotou po pár dnech.
+- **eventy: 30 dní** — řídké, kurovaná historie čitelná pro člověka, má
+  smysl držet déle.
+
+Mazání jde přes derived delete query (`deleteByRecordedAtBefore`/
+`deleteByOccurredAtBefore` na repository), ne přes DB-level partitioning
+nebo downsampling — pro objem dat portfolio projektu je to dostatečné a
+nejjednodušší řešení; partitioning/agregace by byly overengineering.

@@ -3,6 +3,22 @@
 Konvence: všechny endpointy pod `/api/v1/...`, JSON, chyby ve formátu
 `{ timestamp, status, message }` (viz `GlobalExceptionHandler`).
 
+Stránkované endpointy (metriky, eventy) vrací `PageResponse<T>` místo raw
+Spring `Page` JSON:
+
+```json
+{
+  "content": [ /* položky */ ],
+  "page": 0,
+  "size": 20,
+  "totalElements": 309,
+  "totalPages": 62
+}
+```
+
+Standardní query parametry `page`, `size`, `sort` fungují na obou (Spring
+`Pageable` binding).
+
 ## Services
 
 `Service` je spravovaná ručně (přes API), ne odvozená ze scheduleru — proto plné CRUD.
@@ -25,7 +41,12 @@ existují — viz architecture.md).
 
 | Metoda | Cesta                                  | Popis                                  |
 |--------|-----------------------------------------|-----------------------------------------|
-| GET    | `/api/v1/services/{serviceId}/metrics`  | historie metrik dané služby (nejnovější první) |
+| GET    | `/api/v1/services/{serviceId}/metrics`  | stránkovaná historie metrik dané služby (nejnovější první) |
+
+Volitelný query parametr `name` filtruje na jeden konkrétní typ metriky —
+nutné použít při čtení konkrétního grafu (bez něj by stránkování mixovalo
+všech 7 typů dohromady a "utopilo" hledaný typ v jedné stránce). Výchozí
+velikost stránky je 20.
 
 ## Alerts
 
@@ -54,8 +75,8 @@ Read-only, kurovaná historie událostí (ne raw log) — viz architecture.md.
 
 | Metoda | Cesta                              | Popis                                      |
 |--------|--------------------------------------|---------------------------------------------|
-| GET    | `/api/v1/events`                     | posledních 50 událostí napříč všemi službami |
-| GET    | `/api/v1/services/{serviceId}/events`| historie událostí dané služby                |
+| GET    | `/api/v1/events`                     | stránkovaná historie událostí napříč všemi službami (výchozí velikost 50) |
+| GET    | `/api/v1/services/{serviceId}/events`| stránkovaná historie událostí dané služby (výchozí velikost 50) |
 
 ## Real-time (SSE)
 
@@ -63,8 +84,9 @@ Read-only, kurovaná historie událostí (ne raw log) — viz architecture.md.
 |--------|-----------------------------|------------------------------------------------------------|
 | GET    | `/api/v1/events/services`   | SSE stream se třemi typy eventů: `metric` (`ServiceMetricEvent`), `alert` (`AlertEventNotification`), `event` (`EventNotification`) |
 
-## TODO
+## Retence dat
 
-- Stránkování pro `GET /api/v1/services/{serviceId}/metrics` a `GET /api/v1/events`
-  (zatím vrací celou/omezenou historii bez skutečného stránkování — pro
-  portfolio rozsah OK, při reálném provozu by rostlo bez limitu).
+Metriky a eventy se automaticky mažou po vypršení retenční doby
+(`RetentionCleanupScheduler`, viz [architecture.md](architecture.md)) —
+metriky po 7 dnech, eventy po 30. Konfigurovatelné přes `retention.*`
+v `application.yml`, žádný API endpoint pro to není potřeba.

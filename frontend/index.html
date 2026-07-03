@@ -1,9 +1,18 @@
 <!doctype html>
-<html lang="cs" class="dark">
+<html lang="cs">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Monitoring Dashboard</title>
+    <script>
+      // Applied before paint to avoid a light/dark flash — SettingsContext
+      // takes over after mount and keeps this in sync with user changes.
+      (function () {
+        var theme = JSON.parse(localStorage.getItem("settings.theme") || '"system"');
+        var isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", isDark);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

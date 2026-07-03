@@ -3,8 +3,7 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import { fetchServiceMetrics } from "@/api/services";
 import type { ServiceMetricEvent } from "@/api/types";
 import { formatMetricValue } from "@/shared/utils/formatMetric";
-
-const MAX_POINTS = 20;
+import { useSettings } from "@/shared/context/SettingsContext";
 
 export function MetricChart({
   serviceId,
@@ -17,6 +16,8 @@ export function MetricChart({
   label: string;
   liveEvents: ServiceMetricEvent[];
 }) {
+  const { chartPoints } = useSettings();
+
   // REST baseline fetched once per service+metric; live SSE events merged in
   // via useMemo at render time (see ResponseTimeChart for why: avoids
   // setState-in-effect on every incoming event).
@@ -24,19 +25,14 @@ export function MetricChart({
 
   useEffect(() => {
     let cancelled = false;
-    fetchServiceMetrics(serviceId).then((metrics) => {
+    fetchServiceMetrics(serviceId, { name: metricName, size: chartPoints }).then((metrics) => {
       if (cancelled) return;
-      const values = metrics
-        .filter((metric) => metric.name === metricName)
-        .slice(0, MAX_POINTS)
-        .reverse()
-        .map((metric) => metric.value);
-      setHistory(values);
+      setHistory(metrics.reverse().map((metric) => metric.value));
     });
     return () => {
       cancelled = true;
     };
-  }, [serviceId, metricName]);
+  }, [serviceId, metricName, chartPoints]);
 
   const data = useMemo(() => {
     const values = [...history];
@@ -45,8 +41,8 @@ export function MetricChart({
         values.push(event.value);
       }
     }
-    return values.slice(-MAX_POINTS).map((value, index) => ({ index, value }));
-  }, [history, liveEvents, serviceId, metricName]);
+    return values.slice(-chartPoints).map((value, index) => ({ index, value }));
+  }, [history, liveEvents, serviceId, metricName, chartPoints]);
 
   const latest = data.at(-1)?.value;
 

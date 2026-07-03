@@ -1,3 +1,12 @@
+/** Matches backend PageResponse<T> — the paginated wrapper for /metrics and /events. */
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
 export interface ServiceResponse {
   id: number;
   name: string;

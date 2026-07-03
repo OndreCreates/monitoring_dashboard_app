@@ -5,6 +5,7 @@ import { ServicesPage } from "@/features/services/ServicesPage";
 import { MetricsPage } from "@/features/metrics/MetricsPage";
 import { AlertsPage } from "@/features/alerts/AlertsPage";
 import { EventsPage } from "@/features/events/EventsPage";
+import { SettingsPage } from "@/features/settings/SettingsPage";
 
 const router = createBrowserRouter([
   {
@@ -16,6 +17,7 @@ const router = createBrowserRouter([
       { path: "metrics", element: <MetricsPage /> },
       { path: "alerts", element: <AlertsPage /> },
       { path: "events", element: <EventsPage /> },
+      { path: "settings", element: <SettingsPage /> },
     ],
   },
 ]);

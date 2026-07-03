@@ -23,3 +23,12 @@ management:
 # Pull-model metric collection interval (see docs/architecture.md).
 monitoring:
   poll-interval-ms: 30000
+
+# Retention policy for time-series data (see docs/architecture.md).
+# Metriky mají kratší okno než eventy — je jich řádově víc (7 typů na tik schedulera)
+# a jednotlivá hodnota má malou informační hodnotu po pár dnech; eventy jsou řídké
+# a tvoří čitelnou historii, proto se drží déle.
+retention:
+  metrics-days: 7
+  events-days: 30
+  cleanup-cron: "0 0 3 * * *"

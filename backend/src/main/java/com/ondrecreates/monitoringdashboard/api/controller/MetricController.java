@@ -1,12 +1,16 @@
 package com.ondrecreates.monitoringdashboard.api.controller;
 
 import com.ondrecreates.monitoringdashboard.api.dto.MetricResponse;
+import com.ondrecreates.monitoringdashboard.api.dto.PageResponse;
 import com.ondrecreates.monitoringdashboard.api.mapper.MetricMapper;
 import com.ondrecreates.monitoringdashboard.service.MetricService;
-import java.util.List;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -22,7 +26,11 @@ public class MetricController {
     }
 
     @GetMapping
-    public List<MetricResponse> findByService(@PathVariable Long serviceId) {
-        return metricService.findByService(serviceId).stream().map(metricMapper::toResponse).toList();
+    public PageResponse<MetricResponse> findByService(
+            @PathVariable Long serviceId,
+            @RequestParam(required = false) String name,
+            @PageableDefault(size = 20, sort = "recordedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return PageResponse.of(
+                metricService.findByService(serviceId, name, pageable).map(metricMapper::toResponse));
     }
 }
