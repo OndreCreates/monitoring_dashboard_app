@@ -5,17 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/Ta
 import { useServices } from "@/shared/hooks/useServices";
 import { useLiveEvents } from "@/shared/hooks/useLiveEvents";
 import { MetricChart } from "@/features/metrics/MetricChart";
-import { ServiceComparisonChart } from "@/features/metrics/ServiceComparisonChart";
-
-const METRICS = [
-  { name: "health_status", label: "Health status" },
-  { name: "response_time_ms", label: "Response time" },
-  { name: "cpu_usage", label: "CPU usage" },
-  { name: "memory_used", label: "Memory used" },
-  { name: "disk_free", label: "Disk free" },
-  { name: "request_count", label: "Request count" },
-  { name: "error_count", label: "Error count" },
-];
+import { ServiceComparisonChart } from "@/shared/components/ServiceComparisonChart";
+import { METRICS } from "@/shared/constants/metrics";
 
 export function MetricsPage() {
   const { services, loading } = useServices();

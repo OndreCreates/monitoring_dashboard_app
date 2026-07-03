@@ -19,7 +19,7 @@ export function MetricChart({
   const { chartPoints } = useSettings();
 
   // REST baseline fetched once per service+metric; live SSE events merged in
-  // via useMemo at render time (see ResponseTimeChart for why: avoids
+  // via useMemo at render time (see ServiceComparisonChart for why: avoids
   // setState-in-effect on every incoming event).
   const [history, setHistory] = useState<number[]>([]);
 

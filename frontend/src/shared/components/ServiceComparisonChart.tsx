@@ -1,23 +1,26 @@
 import { useEffect, useMemo, useState } from "react";
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { fetchServiceMetrics } from "@/api/services";
 import type { ServiceMetricEvent, ServiceResponse } from "@/api/types";
+import { formatMetricValue } from "@/shared/utils/formatMetric";
 import { useSettings } from "@/shared/context/SettingsContext";
 
-const LINE_COLORS = ["#8b5cf6", "#22d3ee", "#f97316", "#34d399", "#f472b6"];
+export const LINE_COLORS = ["#8b5cf6", "#22d3ee", "#f97316", "#34d399", "#f472b6"];
 
-export function ResponseTimeChart({
+/** One metric, all services in a single chart — used on both the Dashboard (fixed to
+ * response_time_ms) and the Metrics page's comparison tab (any metric). */
+export function ServiceComparisonChart({
   services,
+  metricName,
   liveEvents,
+  height = 280,
 }: {
   services: ServiceResponse[];
+  metricName: string;
   liveEvents: ServiceMetricEvent[];
+  height?: number;
 }) {
   const { chartPoints } = useSettings();
-
-  // REST-fetched baseline, set once per service list — live SSE events are
-  // merged in at render time via useMemo below, not accumulated in state,
-  // so there's no setState-in-effect on every incoming event.
   const [history, setHistory] = useState<Record<number, number[]>>({});
 
   useEffect(() => {
@@ -25,7 +28,7 @@ export function ResponseTimeChart({
     let cancelled = false;
     Promise.all(
       services.map((service) =>
-        fetchServiceMetrics(service.id, { name: "response_time_ms", size: chartPoints }).then((metrics) => ({
+        fetchServiceMetrics(service.id, { name: metricName, size: chartPoints }).then((metrics) => ({
           id: service.id,
           values: metrics.reverse().map((metric) => metric.value),
         })),
@@ -41,7 +44,7 @@ export function ResponseTimeChart({
     return () => {
       cancelled = true;
     };
-  }, [services, chartPoints]);
+  }, [services, metricName, chartPoints]);
 
   const data = useMemo(() => {
     const merged: Record<number, number[]> = {};
@@ -49,7 +52,7 @@ export function ResponseTimeChart({
       merged[service.id] = [...(history[service.id] ?? [])];
     }
     for (const event of liveEvents) {
-      if (event.metricName !== "response_time_ms") continue;
+      if (event.metricName !== metricName) continue;
       const arr = merged[event.serviceId] ?? (merged[event.serviceId] = []);
       arr.push(event.value);
     }
@@ -68,7 +71,7 @@ export function ResponseTimeChart({
       }
       return point;
     });
-  }, [services, history, liveEvents, chartPoints]);
+  }, [services, history, liveEvents, metricName, chartPoints]);
 
   if (data.length === 0) {
     return (
@@ -79,12 +82,21 @@ export function ResponseTimeChart({
   }
 
   return (
-    <ResponsiveContainer width="100%" height={200}>
+    <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
         <XAxis dataKey="index" stroke="var(--muted-foreground)" fontSize={12} />
-        <YAxis stroke="var(--muted-foreground)" fontSize={12} unit=" ms" />
-        <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }} />
+        <YAxis
+          stroke="var(--muted-foreground)"
+          fontSize={12}
+          width={60}
+          tickFormatter={(value) => formatMetricValue(metricName, Number(value))}
+        />
+        <Tooltip
+          contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }}
+          formatter={(value) => formatMetricValue(metricName, Number(value))}
+        />
+        <Legend wrapperStyle={{ fontSize: 12 }} />
         {services.map((service, index) => (
           <Line
             key={service.id}

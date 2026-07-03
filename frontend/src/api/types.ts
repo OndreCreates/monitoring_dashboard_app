@@ -26,6 +26,12 @@ export interface UptimeResponse {
   days: number;
 }
 
+export interface SystemInfoResponse {
+  pollIntervalMs: number;
+  metricsRetentionDays: number;
+  eventsRetentionDays: number;
+}
+
 export interface MetricResponse {
   id: number;
   name: string;

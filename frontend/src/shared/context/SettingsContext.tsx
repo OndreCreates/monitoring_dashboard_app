@@ -3,11 +3,17 @@ import { useLocalStorage } from "@/shared/hooks/useLocalStorage";
 
 export type Theme = "light" | "dark" | "system";
 
+export const ACCENT_COLORS = ["#8b5cf6", "#22d3ee", "#f97316", "#34d399", "#f472b6", "#f43f5e"];
+
 interface SettingsContextValue {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   chartPoints: number;
   setChartPoints: (points: number) => void;
+  appName: string;
+  setAppName: (name: string) => void;
+  accentColor: string;
+  setAccentColor: (color: string) => void;
 }
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
@@ -20,6 +26,8 @@ function resolveIsDark(theme: Theme) {
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useLocalStorage<Theme>("settings.theme", "system");
   const [chartPoints, setChartPoints] = useLocalStorage<number>("settings.chartPoints", 20);
+  const [appName, setAppName] = useLocalStorage<string>("settings.appName", "Monitoring Dashboard");
+  const [accentColor, setAccentColor] = useLocalStorage<string>("settings.accentColor", ACCENT_COLORS[0]);
 
   useEffect(() => {
     const apply = () => document.documentElement.classList.toggle("dark", resolveIsDark(theme));
@@ -32,8 +40,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [theme]);
 
   const value = useMemo(
-    () => ({ theme, setTheme, chartPoints, setChartPoints }),
-    [theme, setTheme, chartPoints, setChartPoints],
+    () => ({ theme, setTheme, chartPoints, setChartPoints, appName, setAppName, accentColor, setAccentColor }),
+    [theme, setTheme, chartPoints, setChartPoints, appName, setAppName, accentColor, setAccentColor],
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

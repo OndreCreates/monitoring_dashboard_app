@@ -9,17 +9,8 @@ import { useLiveEvents } from "@/shared/hooks/useLiveEvents";
 import { fetchService, fetchServiceUptime } from "@/api/services";
 import { fetchServiceEvents } from "@/api/events";
 import { MetricChart } from "@/features/metrics/MetricChart";
+import { METRICS } from "@/shared/constants/metrics";
 import type { EventResponse, ServiceResponse, UptimeResponse } from "@/api/types";
-
-const METRICS = [
-  { name: "health_status", label: "Health status" },
-  { name: "response_time_ms", label: "Response time" },
-  { name: "cpu_usage", label: "CPU usage" },
-  { name: "memory_used", label: "Memory used" },
-  { name: "disk_free", label: "Disk free" },
-  { name: "request_count", label: "Request count" },
-  { name: "error_count", label: "Error count" },
-];
 
 function UptimeBadge({ uptime }: { uptime: UptimeResponse | null }) {
   if (!uptime || uptime.percentage === null) {

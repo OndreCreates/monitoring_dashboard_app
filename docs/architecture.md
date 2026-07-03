@@ -222,3 +222,22 @@ alertů, stejné pravidlo jako u ostatního "best effort" volání v appce.
 Ověřeno end-to-end proti lokálnímu HTTP receiveru (`host.docker.internal`
 z kontejneru) — reálný TRIGGERED i RESOLVED požadavek dorazil se správným
 Slack JSON tělem.
+
+## Branding a "aktivní alerty" na frontendu
+
+Sidebar workspace karta (název appky, barva avataru) je jen frontendový
+stav v `SettingsContext`/localStorage — žádný backend endpoint, stejně
+jako motiv a délka historie grafů.
+
+Počet aktivně spuštěných alertů (badge u "Alerts", stavová tečka ve
+workspace kartě, tab "Alerty" v žebříčku na Dashboardu) počítá
+`useActiveAlerts`: baseline se získá per-alert dotazem na poslední
+`AlertEvent` (stejný fetch, co už dělá `AlertEventsList`), pak se drží
+živě přes SSE `alertEvents` bez re-pollingu.
+
+**Gotcha, na kterou už jednou došlo:** `useLiveEvents` vrací `alertEvents`
+řazené od nejnovějšího (`[novy, ...prev]`), takže při slučování s baseline
+je potřeba brát pro každé `alertId` jen PRVNÍ výskyt v poli — naivní loop
+přes celé pole by přepisoval hodnotu na status z nejstaršího záznamu
+(poslední průchod smyčkou), takže badge po vyřešení alertu zůstal viset
+na "aktivní" i po RESOLVED eventu.

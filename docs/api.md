@@ -110,3 +110,13 @@ v `application.yml`, žádný API endpoint pro to není potřeba.
 (prázdné = vypnuto) a `WEBHOOK_FORMAT` (`slack` nebo `discord`), viz
 [architecture.md](architecture.md). Backend při TRIGGERED/RESOLVED alertu
 pošle POST na tuto URL.
+
+## System info
+
+| Metoda | Cesta                     | Popis                                        |
+|--------|----------------------------|-----------------------------------------------|
+| GET    | `/api/v1/system-info`     | aktuální hodnoty `poll-interval-ms`, `retention.*` |
+
+Read-only přehled aktivní konfigurace — zobrazuje se v Settings, aby
+frontend nikdy nezobrazoval hodnoty, které se rozešly se skutečným
+backendem (žádné natvrdo napsané konstanty na frontendu).

@@ -7,8 +7,9 @@ import { useAlerts } from "@/shared/hooks/useAlerts";
 import { useLiveEvents } from "@/shared/hooks/useLiveEvents";
 import { fetchServiceMetrics } from "@/api/services";
 import type { MetricResponse, ServiceResponse } from "@/api/types";
-import { formatMetricValue } from "@/shared/utils/formatMetric";
-import { ResponseTimeChart } from "@/features/dashboard/ResponseTimeChart";
+import { ServiceComparisonChart, LINE_COLORS } from "@/shared/components/ServiceComparisonChart";
+import { ServiceLeaderboard } from "@/features/dashboard/ServiceLeaderboard";
+import { LiveActivityTabs } from "@/features/dashboard/LiveActivityTabs";
 
 export function DashboardPage() {
   const { services, loading: servicesLoading, error: servicesError } = useServices();
@@ -22,9 +23,9 @@ export function DashboardPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-3">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Dashboard</h1>
         <p className="text-sm text-muted-foreground">
           Přehled monitorovaných služeb a jejich stavu v reálném čase.
         </p>
@@ -39,118 +40,74 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {kpis.map((kpi) => (
           <Card key={kpi.label}>
-            <CardHeader>
-              <CardTitle>{kpi.label}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <span className="text-3xl font-semibold">{kpi.value}</span>
+            <CardContent className="flex items-center justify-between py-4">
+              <span className="text-sm text-muted-foreground">{kpi.label}</span>
+              <span className="text-2xl font-semibold">{kpi.value}</span>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base font-semibold text-foreground">Response time</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponseTimeChart services={services} liveEvents={metricEvents} />
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <Card className="md:col-span-2 xl:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold text-foreground">Response time</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ServiceComparisonChart
+              services={services}
+              metricName="response_time_ms"
+              liveEvents={metricEvents}
+              height={150}
+            />
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base font-semibold text-foreground">Alert activity (SSE)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {alertEvents.length === 0 ? (
-            <div className="flex h-24 items-center justify-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
-              Zatím žádná alert aktivita.
-            </div>
-          ) : (
-            <ul className="flex flex-col gap-2 text-sm">
-              {alertEvents.map((event, index) => (
-                <li
-                  key={`${event.alertId}-${event.timestamp}-${index}`}
-                  className="flex items-center justify-between rounded-md border border-border px-3 py-2"
-                >
-                  <Badge variant={event.status === "TRIGGERED" ? "destructive" : "success"}>
-                    {event.status}
-                  </Badge>
-                  <span className="font-medium">{event.serviceName}</span>
-                  <span className="text-muted-foreground">{event.metricName}</span>
-                  <span className="font-mono">{event.triggeringValue}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(event.timestamp).toLocaleTimeString("cs-CZ")}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+        <Card className="xl:col-span-1">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold text-foreground">Žebříček služeb</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ServiceLeaderboard services={services} />
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base font-semibold text-foreground">Live metrics (SSE)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {metricEvents.length === 0 ? (
-            <div className="flex h-32 items-center justify-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
-              Zatím žádné metriky — počkej na první tik schedulera (výchozí interval 30s).
-            </div>
-          ) : (
-            <ul className="flex flex-col gap-2 text-sm">
-              {metricEvents.map((event, index) => (
-                <li
-                  key={`${event.serviceId}-${event.recordedAt}-${index}`}
-                  className="flex items-center justify-between rounded-md border border-border px-3 py-2"
-                >
-                  <span className="font-medium">{event.serviceName}</span>
-                  <span className="text-muted-foreground">{event.metricName}</span>
-                  {event.metricName === "health_status" ? (
-                    <Badge variant={event.value === 1 ? "success" : "destructive"}>
-                      {formatMetricValue(event.metricName, event.value)}
-                    </Badge>
-                  ) : (
-                    <span className="font-mono">{formatMetricValue(event.metricName, event.value)}</span>
-                  )}
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(event.recordedAt).toLocaleTimeString("cs-CZ")}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+        <Card className="xl:col-span-1">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold text-foreground">Živá aktivita (SSE)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <LiveActivityTabs alertEvents={alertEvents} metricEvents={metricEvents} />
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base font-semibold text-foreground">Services</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {servicesLoading ? (
-            <p className="text-sm text-muted-foreground">Načítám…</p>
-          ) : services.length === 0 ? (
-            <div className="flex items-center justify-between rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
-              <span>Zatím žádná registrovaná služba (POST /api/v1/services).</span>
-              <Badge variant="secondary">0 služeb</Badge>
-            </div>
-          ) : (
-            <ul className="flex flex-col gap-2 text-sm">
-              {services.map((service) => (
-                <ServiceRow key={service.id} service={service} />
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+        <Card className="md:col-span-2 xl:col-span-4">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold text-foreground">Services</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {servicesLoading ? (
+              <p className="text-sm text-muted-foreground">Načítám…</p>
+            ) : services.length === 0 ? (
+              <div className="flex items-center justify-between rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
+                <span>Zatím žádná registrovaná služba.</span>
+                <Badge variant="secondary">0 služeb</Badge>
+              </div>
+            ) : (
+              <ul className="grid max-h-44 grid-cols-1 gap-2 overflow-y-auto text-sm md:grid-cols-2 xl:grid-cols-4">
+                {services.map((service, index) => (
+                  <ServiceRow key={service.id} service={service} color={LINE_COLORS[index % LINE_COLORS.length]} />
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
 
-function ServiceRow({ service }: { service: ServiceResponse }) {
+function ServiceRow({ service, color }: { service: ServiceResponse; color: string }) {
   const [latestMetric, setLatestMetric] = useState<MetricResponse | null>(null);
 
   useEffect(() => {
@@ -173,11 +130,17 @@ function ServiceRow({ service }: { service: ServiceResponse }) {
     <li>
       <Link
         to={`/services/${service.id}`}
-        className="flex items-center justify-between rounded-md border border-border px-3 py-2 hover:bg-accent"
+        className="flex items-center gap-3 rounded-md border border-border px-3 py-2 hover:bg-accent"
       >
-        <div className="flex flex-col">
-          <span className="font-medium">{service.name}</span>
-          <span className="text-xs text-muted-foreground">{service.url}</span>
+        <div
+          className="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+          style={{ backgroundColor: color }}
+        >
+          {service.name.charAt(0).toUpperCase()}
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate font-medium">{service.name}</span>
+          <span className="truncate text-xs text-muted-foreground">{service.url}</span>
         </div>
         {latestMetric ? (
           <Badge variant="success">{latestMetric.value.toFixed(0)} ms</Badge>

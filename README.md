@@ -93,4 +93,7 @@ unit (Mockito) i integrační (Testcontainers, reálný PostgreSQL + Flyway) —
 a CI pipeline (GitHub Actions: build+test backend, lint+build frontend).
 Retention policy (`RetentionCleanupScheduler`) drží velikost metrik/eventů
 pod kontrolou. Volitelné Slack/Discord webhook notifikace při alertu
-(`WEBHOOK_URL` env proměnná).
+(`WEBHOOK_URL` env proměnná). Sidebar má nastavitelný branding (název,
+barva) a badge s počtem aktivních alertů, Dashboard žebříček služeb podle
+response time/chybovosti/alertů, Settings zobrazuje i aktuální backend
+konfiguraci (`GET /api/v1/system-info`).
