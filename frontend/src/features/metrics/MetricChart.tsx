@@ -63,7 +63,12 @@ export function MetricChart({
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="index" hide />
-            <YAxis stroke="var(--muted-foreground)" fontSize={10} width={40} />
+            <YAxis
+              stroke="var(--muted-foreground)"
+              fontSize={10}
+              width={60}
+              tickFormatter={(value) => formatMetricValue(metricName, Number(value))}
+            />
             <Tooltip
               contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }}
               formatter={(value) => formatMetricValue(metricName, Number(value))}

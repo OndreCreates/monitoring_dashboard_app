@@ -2,6 +2,7 @@ package com.ondrecreates.monitoringdashboard.api.controller;
 
 import com.ondrecreates.monitoringdashboard.api.dto.MetricResponse;
 import com.ondrecreates.monitoringdashboard.api.dto.PageResponse;
+import com.ondrecreates.monitoringdashboard.api.dto.UptimeResponse;
 import com.ondrecreates.monitoringdashboard.api.mapper.MetricMapper;
 import com.ondrecreates.monitoringdashboard.service.MetricService;
 import org.springframework.data.domain.Pageable;
@@ -32,5 +33,10 @@ public class MetricController {
             @PageableDefault(size = 20, sort = "recordedAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return PageResponse.of(
                 metricService.findByService(serviceId, name, pageable).map(metricMapper::toResponse));
+    }
+
+    @GetMapping("/uptime")
+    public UptimeResponse uptime(@PathVariable Long serviceId, @RequestParam(defaultValue = "7") int days) {
+        return new UptimeResponse(metricService.calculateUptimePercentage(serviceId, days), days);
     }
 }

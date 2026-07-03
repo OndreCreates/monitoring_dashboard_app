@@ -81,10 +81,13 @@ nic ručně přes API zakládat netřeba. Frontend má i produkční Docker imag
 7 typů metrik (health, response time, CPU, paměť, disk, počet requestů, chybovost),
 skutečné vyhodnocování alertů (TRIGGERED/RESOLVED) a kurovaná časová osa událostí —
 vše přes REST i živě přes SSE. `GET /metrics` a `GET /events` jsou stránkované
-(`PageResponse<T>`, volitelný `name` filtr u metrik). Frontend: Dashboard s grafem
-a živými feedy, Services a Alerts s formuláři, Events s časovou osou, Metrics
-stránka s grafy pro všech 7 typů metrik, Settings (světlý/tmavý/systémový motiv,
-délka historie grafů), responsivní layout s mobilní navigací. Backend má i testy — unit (Mockito)
+(`PageResponse<T>`, volitelný `name` filtr u metrik), služby mají tagy a
+uptime % (počítané SQL agregátem, ne na frontendu). Frontend: Dashboard
+s grafem a živými feedy, Services a Alerts s formuláři a filtrováním,
+detail stránka služby (metriky, alerty, historie, uptime badge), Events
+s časovou osou, Metrics stránka s grafy pro všech 7 typů metrik, Settings
+(světlý/tmavý/systémový motiv, délka historie grafů), responsivní layout
+s mobilní navigací. Backend má i testy — unit (Mockito)
 i integrační (Testcontainers, reálný PostgreSQL + Flyway) — a CI pipeline
 (GitHub Actions: build+test backend, lint+build frontend). Retention policy
 (`RetentionCleanupScheduler`) drží velikost metrik/eventů pod kontrolou.

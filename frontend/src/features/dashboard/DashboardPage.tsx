@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/Card";
 import { Badge } from "@/shared/components/Badge";
 import { useServices } from "@/shared/hooks/useServices";
@@ -169,16 +170,21 @@ function ServiceRow({ service }: { service: ServiceResponse }) {
   }, [service.id]);
 
   return (
-    <li className="flex items-center justify-between rounded-md border border-border px-3 py-2">
-      <div className="flex flex-col">
-        <span className="font-medium">{service.name}</span>
-        <span className="text-xs text-muted-foreground">{service.url}</span>
-      </div>
-      {latestMetric ? (
-        <Badge variant="success">{latestMetric.value.toFixed(0)} ms</Badge>
-      ) : (
-        <Badge variant="secondary">no data</Badge>
-      )}
+    <li>
+      <Link
+        to={`/services/${service.id}`}
+        className="flex items-center justify-between rounded-md border border-border px-3 py-2 hover:bg-accent"
+      >
+        <div className="flex flex-col">
+          <span className="font-medium">{service.name}</span>
+          <span className="text-xs text-muted-foreground">{service.url}</span>
+        </div>
+        {latestMetric ? (
+          <Badge variant="success">{latestMetric.value.toFixed(0)} ms</Badge>
+        ) : (
+          <Badge variant="secondary">no data</Badge>
+        )}
+      </Link>
     </li>
   );
 }

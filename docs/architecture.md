@@ -192,3 +192,17 @@ Mazání jde přes derived delete query (`deleteByRecordedAtBefore`/
 `deleteByOccurredAtBefore` na repository), ne přes DB-level partitioning
 nebo downsampling — pro objem dat portfolio projektu je to dostatečné a
 nejjednodušší řešení; partitioning/agregace by byly overengineering.
+
+## Uptime % a tagy služeb
+
+`GET /api/v1/services/{id}/metrics/uptime?days=N` počítá uptime jako
+`AVG(value)` přes `health_status` metriky v daném okně — protože
+`health_status` je vždy 0.0 nebo 1.0, průměr je přesně podíl "up" vzorků.
+Počítá se to jedním SQL agregátem na backendu (`MetricRepository.averageValueSince`),
+ne fetchem všech řádků na frontend — u služby s tikem každých 30s je to
+řádově tisíce řádků za týden, zbytečná zátěž pro klienta i síť.
+
+Tagy (`Service.tags`) se ukládají jako jeden comma-joined `VARCHAR` sloupec
+přes `StringListConverter` (`AttributeConverter<List<String>, String>`),
+ne přes samostatnou join tabulku — pro pár krátkých tagů na službu je
+relační M:N vztah zbytečná komplexita navíc.

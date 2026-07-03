@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/Card";
 import { Badge } from "@/shared/components/Badge";
 import { Button } from "@/shared/components/Button";
@@ -29,6 +29,12 @@ export function AlertsPage() {
   const [comparison, setComparison] = useState<AlertComparison>("GREATER_THAN");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [filterServiceId, setFilterServiceId] = useState<number | "">("");
+
+  const visibleAlerts = useMemo(
+    () => (filterServiceId === "" ? alerts : alerts.filter((alert) => alert.serviceId === filterServiceId)),
+    [alerts, filterServiceId],
+  );
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -142,15 +148,33 @@ export function AlertsPage() {
         <CardHeader>
           <CardTitle className="text-base font-semibold text-foreground">Pravidla</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-3">
+          {alerts.length > 0 && (
+            <Select
+              className="w-56"
+              value={filterServiceId}
+              onChange={(event) =>
+                setFilterServiceId(event.target.value === "" ? "" : Number(event.target.value))
+              }
+            >
+              <option value="">Všechny služby</option>
+              {services.map((service) => (
+                <option key={service.id} value={service.id}>
+                  {service.name}
+                </option>
+              ))}
+            </Select>
+          )}
           {error && <p className="text-sm text-destructive">{error}</p>}
           {loading ? (
             <p className="text-sm text-muted-foreground">Načítám…</p>
           ) : alerts.length === 0 ? (
             <p className="text-sm text-muted-foreground">Zatím žádné pravidlo.</p>
+          ) : visibleAlerts.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Žádné pravidlo pro vybranou službu.</p>
           ) : (
             <ul className="flex flex-col gap-4">
-              {alerts.map((alert) => {
+              {visibleAlerts.map((alert) => {
                 const service = services.find((candidate) => candidate.id === alert.serviceId);
                 return (
                   <li key={alert.id} className="rounded-md border border-border p-3">

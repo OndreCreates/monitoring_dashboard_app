@@ -12,11 +12,18 @@ export interface ServiceResponse {
   name: string;
   url: string;
   createdAt: string;
+  tags: string[];
 }
 
 export interface ServiceRequest {
   name: string;
   url: string;
+  tags: string[];
+}
+
+export interface UptimeResponse {
+  percentage: number | null;
+  days: number;
 }
 
 export interface MetricResponse {

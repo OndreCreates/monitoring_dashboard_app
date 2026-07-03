@@ -31,6 +31,11 @@ Standardní query parametry `page`, `size`, `sort` fungují na obou (Spring
 | PUT    | `/api/v1/services/{id}`| upravit službu           |
 | DELETE | `/api/v1/services/{id}`| smazat službu            |
 
+`ServiceRequest`/`ServiceResponse` mají i `tags: string[]` (např.
+`["production", "payments"]`) — volitelné, štítky pro filtrování/organizaci
+služeb. Ukládá se jako jeden comma-joined sloupec (`StringListConverter`),
+ne přes join tabulku — pro pár tagů na službu zbytečná složitost navíc.
+
 ## Metrics
 
 Read-only — metriky vznikají výhradně interně přes `MetricCollectorScheduler`
@@ -47,6 +52,14 @@ Volitelný query parametr `name` filtruje na jeden konkrétní typ metriky —
 nutné použít při čtení konkrétního grafu (bez něj by stránkování mixovalo
 všech 7 typů dohromady a "utopilo" hledaný typ v jedné stránce). Výchozí
 velikost stránky je 20.
+
+| GET    | `/api/v1/services/{serviceId}/metrics/uptime`  | uptime % za posledních N dní |
+
+Query parametr `days` (výchozí 7). Počítá se jako `AVG(health_status)` přes
+dané okno přímo v SQL (health_status je 0/1, průměr = podíl "up" vzorků) —
+ne fetch všech řádků a výpočet na frontendu, což by u desítek tisíc vzorků
+za týden bylo zbytečně nákladné. `percentage` je `null`, pokud služba v okně
+nemá žádný záznam (např. čerstvě zaregistrovaná).
 
 ## Alerts
 

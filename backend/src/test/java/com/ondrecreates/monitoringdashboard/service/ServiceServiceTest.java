@@ -10,6 +10,7 @@ import com.ondrecreates.monitoringdashboard.api.dto.ServiceRequest;
 import com.ondrecreates.monitoringdashboard.domain.Service;
 import com.ondrecreates.monitoringdashboard.exception.ResourceNotFoundException;
 import com.ondrecreates.monitoringdashboard.repository.ServiceRepository;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,7 +36,8 @@ class ServiceServiceTest {
 
     @Test
     void createSavesServiceAndRecordsRegistrationEvent() {
-        ServiceRequest request = new ServiceRequest("payments-api", "http://payments-api:8080/actuator/health");
+        ServiceRequest request =
+                new ServiceRequest("payments-api", "http://payments-api:8080/actuator/health", List.of("production"));
         when(serviceRepository.save(any(Service.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Service created = serviceService.create(request);

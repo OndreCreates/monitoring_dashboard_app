@@ -34,6 +34,7 @@ public class ServiceService {
         Service service = new Service();
         service.setName(request.name());
         service.setUrl(request.url());
+        service.setTags(request.tags());
         Service saved = serviceRepository.save(service);
         eventService.recordServiceRegistered(saved);
         return saved;
@@ -43,6 +44,7 @@ public class ServiceService {
         Service service = findById(id);
         service.setName(request.name());
         service.setUrl(request.url());
+        service.setTags(request.tags());
         return serviceRepository.save(service);
     }
 
