@@ -38,6 +38,9 @@ class AlertEvaluationServiceTest {
     @Mock
     EventService eventService;
 
+    @Mock
+    WebhookNotifier webhookNotifier;
+
     AlertEvaluationService alertEvaluationService;
 
     Service service;
@@ -45,8 +48,8 @@ class AlertEvaluationServiceTest {
 
     @BeforeEach
     void setUp() {
-        alertEvaluationService =
-                new AlertEvaluationService(alertRepository, alertEventRepository, broadcaster, eventService);
+        alertEvaluationService = new AlertEvaluationService(
+                alertRepository, alertEventRepository, broadcaster, eventService, webhookNotifier);
 
         service = new Service();
         service.setId(1L);

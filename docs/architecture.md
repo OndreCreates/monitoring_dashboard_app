@@ -206,3 +206,19 @@ Tagy (`Service.tags`) se ukládají jako jeden comma-joined `VARCHAR` sloupec
 přes `StringListConverter` (`AttributeConverter<List<String>, String>`),
 ne přes samostatnou join tabulku — pro pár krátkých tagů na službu je
 relační M:N vztah zbytečná komplexita navíc.
+
+## Webhook notifikace (Slack/Discord)
+
+`WebhookNotifier` posílá při TRIGGERED/RESOLVED alertu POST na volitelný
+webhook — volá se z `AlertEvaluationService` hned vedle `broadcast()` a
+`eventService.recordAlert*()`. URL a formát (`slack` posílá `{"text": ...}`,
+`discord` `{"content": ...}`) se čtou z env proměnných `WEBHOOK_URL` /
+`WEBHOOK_FORMAT`, ne z databáze — URL je citlivý údaj (kdokoliv ji zná,
+může postovat do kanálu), stejná logika jako u DB credentials. Prázdné
+`WEBHOOK_URL` (výchozí stav) funkci úplně vypne. Selhání volání se jen
+zaloguje a nešíří dál — nefunkční webhook nesmí rozbít vyhodnocování
+alertů, stejné pravidlo jako u ostatního "best effort" volání v appce.
+
+Ověřeno end-to-end proti lokálnímu HTTP receiveru (`host.docker.internal`
+z kontejneru) — reálný TRIGGERED i RESOLVED požadavek dorazil se správným
+Slack JSON tělem.

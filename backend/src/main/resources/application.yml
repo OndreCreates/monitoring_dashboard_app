@@ -32,3 +32,9 @@ retention:
   metrics-days: 7
   events-days: 30
   cleanup-cron: "0 0 3 * * *"
+
+# Optional Slack/Discord webhook for alert notifications (see docs/architecture.md).
+# URL is secret-like (whoever has it can post to the channel) — env var, never the DB.
+webhook:
+  url: ${WEBHOOK_URL:}
+  format: ${WEBHOOK_FORMAT:slack}

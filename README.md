@@ -85,9 +85,12 @@ vše přes REST i živě přes SSE. `GET /metrics` a `GET /events` jsou stránko
 uptime % (počítané SQL agregátem, ne na frontendu). Frontend: Dashboard
 s grafem a živými feedy, Services a Alerts s formuláři a filtrováním,
 detail stránka služby (metriky, alerty, historie, uptime badge), Events
-s časovou osou, Metrics stránka s grafy pro všech 7 typů metrik, Settings
-(světlý/tmavý/systémový motiv, délka historie grafů), responsivní layout
-s mobilní navigací. Backend má i testy — unit (Mockito)
-i integrační (Testcontainers, reálný PostgreSQL + Flyway) — a CI pipeline
-(GitHub Actions: build+test backend, lint+build frontend). Retention policy
-(`RetentionCleanupScheduler`) drží velikost metrik/eventů pod kontrolou.
+s časovou osou, Metrics stránka s grafy pro všech 7 typů metrik i srovnáním
+napříč službami, Settings (světlý/tmavý/systémový motiv, délka historie
+grafů), responsivní layout s mobilní navigací, Cmd+K command palette a
+drag-and-drop editor alert prahů přímo v grafu. Backend má i testy —
+unit (Mockito) i integrační (Testcontainers, reálný PostgreSQL + Flyway) —
+a CI pipeline (GitHub Actions: build+test backend, lint+build frontend).
+Retention policy (`RetentionCleanupScheduler`) drží velikost metrik/eventů
+pod kontrolou. Volitelné Slack/Discord webhook notifikace při alertu
+(`WEBHOOK_URL` env proměnná).

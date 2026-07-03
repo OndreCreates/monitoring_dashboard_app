@@ -103,3 +103,10 @@ Metriky a eventy se automaticky mažou po vypršení retenční doby
 (`RetentionCleanupScheduler`, viz [architecture.md](architecture.md)) —
 metriky po 7 dnech, eventy po 30. Konfigurovatelné přes `retention.*`
 v `application.yml`, žádný API endpoint pro to není potřeba.
+
+## Webhook notifikace
+
+Žádný API endpoint — konfiguruje se přes env proměnné `WEBHOOK_URL`
+(prázdné = vypnuto) a `WEBHOOK_FORMAT` (`slack` nebo `discord`), viz
+[architecture.md](architecture.md). Backend při TRIGGERED/RESOLVED alertu
+pošle POST na tuto URL.

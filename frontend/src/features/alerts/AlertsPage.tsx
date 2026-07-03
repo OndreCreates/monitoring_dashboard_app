@@ -7,6 +7,7 @@ import { Select } from "@/shared/components/Select";
 import { useServices } from "@/shared/hooks/useServices";
 import { useAlerts } from "@/shared/hooks/useAlerts";
 import { createAlert, deleteAlert, fetchAlertEvents } from "@/api/alerts";
+import { ThresholdEditor } from "@/features/alerts/ThresholdEditor";
 import type { AlertComparison, AlertEventResponse } from "@/api/types";
 
 const METRIC_OPTIONS = [
@@ -141,6 +142,21 @@ export function AlertsPage() {
             </Button>
           </form>
           {formError && <p className="mt-2 text-sm text-destructive">{formError}</p>}
+
+          {serviceId !== "" && (
+            <div className="mt-4">
+              <p className="mb-2 text-xs text-muted-foreground">
+                Přetáhni čárkovanou linku pro nastavení prahu podle nedávné historie.
+              </p>
+              <ThresholdEditor
+                serviceId={serviceId}
+                metricName={metricName}
+                comparison={comparison}
+                threshold={Number(threshold) || 0}
+                onThresholdChange={(value) => setThreshold(String(value))}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 

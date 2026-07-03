@@ -3,12 +3,14 @@ import { Menu } from "lucide-react";
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "@/app/Sidebar";
 import { Button } from "@/shared/components/Button";
+import { CommandPalette } from "@/app/CommandPalette";
 
 export function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
+      <CommandPalette />
       <Sidebar open={sidebarOpen} onNavigate={() => setSidebarOpen(false)} />
 
       {sidebarOpen && (

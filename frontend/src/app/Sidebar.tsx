@@ -1,16 +1,8 @@
 import { NavLink } from "react-router-dom";
-import { Activity, BellRing, History, LayoutDashboard, Server, Settings } from "lucide-react";
+import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/app/ThemeToggle";
-
-const navItems = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/services", label: "Services", icon: Server },
-  { to: "/metrics", label: "Metrics", icon: Activity },
-  { to: "/alerts", label: "Alerts", icon: BellRing },
-  { to: "/events", label: "Events", icon: History },
-  { to: "/settings", label: "Settings", icon: Settings },
-];
+import { navItems } from "@/app/navItems";
 
 export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate: () => void }) {
   return (
@@ -21,6 +13,17 @@ export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate: () =>
       )}
     >
       <div className="mb-6 px-2 text-lg font-semibold tracking-tight">Monitoring Dashboard</div>
+      <button
+        type="button"
+        onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
+        className="mb-4 flex items-center justify-between rounded-md border border-border px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+      >
+        <span className="flex items-center gap-2">
+          <Search className="size-4" />
+          Hledat…
+        </span>
+        <kbd className="rounded border border-border px-1.5 py-0.5 text-xs">⌘K</kbd>
+      </button>
       <nav className="flex flex-1 flex-col gap-1">
         {navItems.map(({ to, label, icon: Icon, end }) => (
           <NavLink
