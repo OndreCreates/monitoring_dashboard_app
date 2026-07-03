@@ -1,14 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { fetchAlertEvents } from "@/api/alerts";
 import { useAlerts } from "@/shared/hooks/useAlerts";
 import { useLiveEvents } from "@/shared/hooks/useLiveEvents";
 
+interface ActiveAlertsContextValue {
+  activeCount: number;
+  activeByServiceId: Record<number, number>;
+}
+
+const ActiveAlertsContext = createContext<ActiveAlertsContextValue | null>(null);
+
 /**
  * Which alerts are currently TRIGGERED (not yet RESOLVED) — baseline comes from each
  * alert's most recent event (same per-alert fetch AlertEventsList already does), then
- * kept live via SSE so it doesn't need repolling.
+ * kept live via SSE so it doesn't need repolling. A single provider so the Sidebar badge
+ * and the Dashboard leaderboard share one computation instead of fetching it twice.
  */
-export function useActiveAlerts() {
+export function ActiveAlertsProvider({ children }: { children: ReactNode }) {
   const { alerts } = useAlerts();
   const { alertEvents } = useLiveEvents();
   const [baseline, setBaseline] = useState<Record<number, boolean>>({});
@@ -50,17 +58,22 @@ export function useActiveAlerts() {
     return map;
   }, [baseline, alertEvents]);
 
-  const activeByServiceId = useMemo(() => {
-    const counts: Record<number, number> = {};
+  const value = useMemo(() => {
+    const activeByServiceId: Record<number, number> = {};
     for (const alert of alerts) {
       if (activeByAlertId[alert.id]) {
-        counts[alert.serviceId] = (counts[alert.serviceId] ?? 0) + 1;
+        activeByServiceId[alert.serviceId] = (activeByServiceId[alert.serviceId] ?? 0) + 1;
       }
     }
-    return counts;
+    const activeCount = Object.values(activeByAlertId).filter(Boolean).length;
+    return { activeCount, activeByServiceId };
   }, [alerts, activeByAlertId]);
 
-  const activeCount = Object.values(activeByAlertId).filter(Boolean).length;
+  return <ActiveAlertsContext.Provider value={value}>{children}</ActiveAlertsContext.Provider>;
+}
 
-  return { activeCount, activeByServiceId };
+export function useActiveAlerts() {
+  const context = useContext(ActiveAlertsContext);
+  if (!context) throw new Error("useActiveAlerts must be used within ActiveAlertsProvider");
+  return context;
 }

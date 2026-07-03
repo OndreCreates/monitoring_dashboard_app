@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/app/ThemeToggle";
 import { WorkspaceCard } from "@/app/WorkspaceCard";
 import { navItems } from "@/app/navItems";
-import { useActiveAlerts } from "@/shared/hooks/useActiveAlerts";
+import { useActiveAlerts } from "@/shared/context/ActiveAlertsContext";
 
 // Settings lives in the bottom row next to the theme toggle, not in the main list —
 // still included in navItems itself so the command palette can still find/navigate to it.

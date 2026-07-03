@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/Tabs";
 import { fetchServiceMetrics } from "@/api/services";
 import { formatMetricValue } from "@/shared/utils/formatMetric";
-import { useActiveAlerts } from "@/shared/hooks/useActiveAlerts";
+import { useActiveAlerts } from "@/shared/context/ActiveAlertsContext";
 import type { ServiceResponse } from "@/api/types";
 
 interface Row {
@@ -36,18 +36,24 @@ function LeaderboardList({ rows, metricName }: { rows: Row[]; metricName: string
   );
 }
 
-function useAverageMetric(services: ServiceResponse[], metricName: string) {
+function average(values: number[]) {
+  return values.length === 0 ? 0 : values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+/** "average" fetches recent history and means it (response time); "latest" just takes the
+ * newest sample (cumulative counters like error_count, where the latest value IS the total). */
+function useMetricLeaderboard(services: ServiceResponse[], metricName: string, mode: "average" | "latest") {
   const [rows, setRows] = useState<Row[]>([]);
+  const size = mode === "average" ? 20 : 1;
 
   useEffect(() => {
     if (services.length === 0) return;
     let cancelled = false;
     Promise.all(
       services.map((service) =>
-        fetchServiceMetrics(service.id, { name: metricName, size: 20 }).then((metrics) => {
+        fetchServiceMetrics(service.id, { name: metricName, size }).then((metrics) => {
           const values = metrics.map((metric) => metric.value);
-          const average = values.length === 0 ? 0 : values.reduce((sum, value) => sum + value, 0) / values.length;
-          return { service, value: average };
+          return { service, value: mode === "average" ? average(values) : (values[0] ?? 0) };
         }),
       ),
     ).then((results) => {
@@ -56,38 +62,14 @@ function useAverageMetric(services: ServiceResponse[], metricName: string) {
     return () => {
       cancelled = true;
     };
-  }, [services, metricName]);
-
-  return rows;
-}
-
-function useLatestMetric(services: ServiceResponse[], metricName: string) {
-  const [rows, setRows] = useState<Row[]>([]);
-
-  useEffect(() => {
-    if (services.length === 0) return;
-    let cancelled = false;
-    Promise.all(
-      services.map((service) =>
-        fetchServiceMetrics(service.id, { name: metricName, size: 1 }).then((metrics) => ({
-          service,
-          value: metrics[0]?.value ?? 0,
-        })),
-      ),
-    ).then((results) => {
-      if (!cancelled) setRows(results.sort((a, b) => b.value - a.value));
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [services, metricName]);
+  }, [services, metricName, mode, size]);
 
   return rows;
 }
 
 export function ServiceLeaderboard({ services }: { services: ServiceResponse[] }) {
-  const responseTimeRows = useAverageMetric(services, "response_time_ms");
-  const errorRows = useLatestMetric(services, "error_count");
+  const responseTimeRows = useMetricLeaderboard(services, "response_time_ms", "average");
+  const errorRows = useMetricLeaderboard(services, "error_count", "latest");
   const { activeByServiceId } = useActiveAlerts();
 
   const alertRows: Row[] = services

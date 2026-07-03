@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/shared/context/SettingsContext";
-import { useActiveAlerts } from "@/shared/hooks/useActiveAlerts";
+import { useActiveAlerts } from "@/shared/context/ActiveAlertsContext";
 
 export function WorkspaceCard() {
   const { appName, accentColor } = useSettings();
