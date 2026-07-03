@@ -108,11 +108,10 @@ CPU/RAM), scheduler navíc sbírá:
   nenastala první chyba, Actuator na tenhle tag vrací 404 — scheduler to
   bere stejně jako ostatní chyby (metrika se pro ten cyklus prostě vynechá).
 
-⚠️ **Známá nekonzistence:** `cpu_usage` čte `system.cpu.usage` (zátěž **celého
-systému/kontejneru**), zatímco `memory_used` čte `jvm.memory.used` (paměť
-**konkrétní té appky**). Kdyby šlo o skutečně srovnatelné metriky, `cpu_usage`
-by měl číst `process.cpu.usage` místo `system.cpu.usage`. Zatím to necháváme
-takhle, ale je to vědomý dluh, ne přehlédnutí.
+`cpu_usage` čte `process.cpu.usage` (ne `system.cpu.usage`) — stejná úroveň
+jako `memory_used` (`jvm.memory.used`), obojí měří konkrétně tu monitorovanou
+appku, ne celý stroj/kontejner. (Dřív tu byla nekonzistence mezi těmi dvěma —
+opraveno.)
 
 ## Historie událostí (Event)
 

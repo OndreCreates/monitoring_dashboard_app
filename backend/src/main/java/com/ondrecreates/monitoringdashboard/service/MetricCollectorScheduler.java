@@ -49,7 +49,9 @@ public class MetricCollectorScheduler {
 
     private void pollService(Service service) {
         pollHealthAndResponseTime(service);
-        pollActuatorMetric(service, "system.cpu.usage", "cpu_usage", "VALUE", null);
+        // process.cpu.usage, not system.cpu.usage — the latter is whole-machine load,
+        // inconsistent with jvm.memory.used which is specific to this one app.
+        pollActuatorMetric(service, "process.cpu.usage", "cpu_usage", "VALUE", null);
         pollActuatorMetric(service, "jvm.memory.used", "memory_used", "VALUE", null);
         pollActuatorMetric(service, "disk.free", "disk_free", "VALUE", null);
         // Cumulative counters (total since the monitored service started), not a per-interval
