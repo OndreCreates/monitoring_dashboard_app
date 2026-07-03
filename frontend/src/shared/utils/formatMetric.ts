@@ -7,8 +7,13 @@ export function formatMetricValue(name: string, value: number): string {
       return `${(value * 100).toFixed(1)} %`;
     case "memory_used":
       return `${(value / 1024 / 1024).toFixed(1)} MB`;
+    case "disk_free":
+      return `${(value / 1024 / 1024 / 1024).toFixed(1)} GB`;
     case "health_status":
       return value === 1 ? "UP" : "DOWN";
+    case "request_count":
+    case "error_count":
+      return value.toFixed(0);
     default:
       return String(value);
   }
