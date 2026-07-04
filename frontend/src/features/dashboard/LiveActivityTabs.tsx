@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/Tabs";
 import { Badge } from "@/shared/components/Badge";
 import { formatMetricValue } from "@/shared/utils/formatMetric";
+import { formatAlertEventStatus } from "@/shared/utils/formatStatus";
 import type { AlertEventNotification, ServiceMetricEvent } from "@/api/types";
 
 export function LiveActivityTabs({
@@ -29,7 +30,9 @@ export function LiveActivityTabs({
                 key={`${event.alertId}-${event.timestamp}-${index}`}
                 className="flex items-center justify-between rounded-md border border-border px-3 py-2"
               >
-                <Badge variant={event.status === "TRIGGERED" ? "destructive" : "success"}>{event.status}</Badge>
+                <Badge variant={event.status === "TRIGGERED" ? "destructive" : "success"}>
+                  {formatAlertEventStatus(event.status)}
+                </Badge>
                 <span className="font-medium">{event.serviceName}</span>
                 <span className="text-muted-foreground">{event.metricName}</span>
                 <span className="text-xs text-muted-foreground">

@@ -8,8 +8,7 @@ import { useAlerts } from "@/shared/hooks/useAlerts";
 import { useLiveEvents } from "@/shared/hooks/useLiveEvents";
 import { fetchService, fetchServiceUptime } from "@/api/services";
 import { fetchServiceEvents } from "@/api/events";
-import { MetricChart } from "@/features/metrics/MetricChart";
-import { METRICS } from "@/shared/constants/metrics";
+import { MetricsGrid } from "@/shared/components/MetricsGrid";
 import type { EventResponse, ServiceResponse, UptimeResponse } from "@/api/types";
 
 function UptimeBadge({ uptime }: { uptime: UptimeResponse | null }) {
@@ -98,17 +97,7 @@ export function ServiceDetailPage() {
 
       <div>
         <h2 className="mb-3 text-base font-semibold text-foreground">Metriky</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {METRICS.map((metric) => (
-            <MetricChart
-              key={metric.name}
-              serviceId={serviceId}
-              metricName={metric.name}
-              label={metric.label}
-              liveEvents={metricEvents}
-            />
-          ))}
-        </div>
+        <MetricsGrid serviceId={serviceId} liveEvents={metricEvents} />
       </div>
 
       <Card>

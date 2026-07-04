@@ -7,6 +7,7 @@ import { useServices } from "@/shared/hooks/useServices";
 import { useAlerts } from "@/shared/hooks/useAlerts";
 import { deleteAlert, fetchAlertEvents } from "@/api/alerts";
 import { AlertForm } from "@/features/alerts/AlertForm";
+import { formatAlertEventStatus } from "@/shared/utils/formatStatus";
 import type { AlertEventResponse } from "@/api/types";
 
 export function AlertsPage() {
@@ -78,7 +79,7 @@ export function AlertsPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant={alert.enabled ? "success" : "secondary"}>
-                          {alert.enabled ? "enabled" : "disabled"}
+                          {alert.enabled ? "zapnuto" : "vypnuto"}
                         </Badge>
                         <Button variant="ghost" size="sm" onClick={() => handleDelete(alert.id)}>
                           Smazat
@@ -124,7 +125,9 @@ function AlertEventsList({ alertId }: { alertId: number }) {
     <ul className="mt-2 flex flex-col gap-1">
       {events.slice(0, 5).map((event) => (
         <li key={event.id} className="flex items-center justify-between text-xs text-muted-foreground">
-          <Badge variant={event.status === "TRIGGERED" ? "destructive" : "success"}>{event.status}</Badge>
+          <Badge variant={event.status === "TRIGGERED" ? "destructive" : "success"}>
+            {formatAlertEventStatus(event.status)}
+          </Badge>
           <span className="font-mono">{event.triggeringValue}</span>
           <span>{new Date(event.triggeredAt).toLocaleString("cs-CZ")}</span>
         </li>

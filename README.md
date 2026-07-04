@@ -1,8 +1,31 @@
 # Monitoring Dashboard
 
-Simulovaný monitoring firemní infrastruktury: sleduje stav a metriky zaregistrovaných
-služeb, vyhodnocuje alert pravidla a v reálném čase posouvá aktualizace na dashboard.
-Portfolio projekt demonstrující full-stack Java/React vývoj.
+**Full-stack monitorovací platforma pro sledování infrastruktury v reálném čase** —
+napsaná jako portfolio projekt demonstrující produkční přístup k Java/Spring Boot
+backendu a React/TypeScript frontendu, ne jen "hello world" CRUD.
+
+Aplikace hraje roli interního nástroje, jaký by týmy používaly ke sledování zdraví
+svých služeb: registruješ službu (URL na health-check), dashboard ji začne aktivně
+obcházet, sbírat její metriky a v reálném čase hlásit výpadky a překročené prahy.
+V repu jsou i dvě malé "demo" služby, které monitoring skutečně obchází přes síť —
+takže to, co vidíš, je opravdový monitoring loop, ne mockovaná data.
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+## Co umí
+
+- **Sledování služeb** — registrace přes health-check URL, tagy, vyhledávání/filtrování,
+  detail stránka s uptime % (počítané SQL agregátem) a historií.
+- **7 typů metrik na službu** — health status, response time, CPU, paměť, volné místo
+  na disku, počet requestů a chybovost. Grafy v čase i srovnání napříč službami.
+- **Alert pravidla** — práh na libovolné metrice (>, <), vyhodnocování v reálném čase,
+  historie TRIGGERED/RESOLVED, volitelné Slack/Discord webhook notifikace.
+- **Živý dashboard** — Server-Sent Events tlačí nové metriky a alerty na frontend
+  bez pollingu; žebříček služeb, kurovaná časová osa událostí, badge s počtem
+  aktivních alertů v postranním panelu.
+- **UX detaily, co dělají rozdíl** — Cmd+K command paleta, drag-and-drop editor
+  alert prahů přímo v grafu, světlý/tmavý/systémový motiv, plně responsivní layout.
+- **Nastavitelné branding** — název appky a barva motivu v Settings, uložené lokálně.
 
 ## Architektura
 
@@ -75,25 +98,31 @@ zaregistrují samy (Flyway seed migrace) — po startu tedy stačí otevřít fr
 nic ručně přes API zakládat netřeba. Frontend má i produkční Docker image
 (`frontend/Dockerfile`, nginx), viz `docker-compose.yml`.
 
-## Status
+Živá API dokumentace (Swagger UI, generovaná z kódu): `http://localhost:8080/swagger-ui/index.html`.
 
-✅ **Funkční, ne jen kostra.** Backend: CRUD pro služby/alerty, scheduler sbírající
-7 typů metrik (health, response time, CPU, paměť, disk, počet requestů, chybovost),
-skutečné vyhodnocování alertů (TRIGGERED/RESOLVED) a kurovaná časová osa událostí —
-vše přes REST i živě přes SSE. `GET /metrics` a `GET /events` jsou stránkované
-(`PageResponse<T>`, volitelný `name` filtr u metrik), služby mají tagy a
-uptime % (počítané SQL agregátem, ne na frontendu). Frontend: Dashboard
-s grafem a živými feedy, Services a Alerts s formuláři a filtrováním,
-detail stránka služby (metriky, alerty, historie, uptime badge), Events
-s časovou osou, Metrics stránka s grafy pro všech 7 typů metrik i srovnáním
-napříč službami, Settings (světlý/tmavý/systémový motiv, délka historie
-grafů), responsivní layout s mobilní navigací, Cmd+K command palette a
-drag-and-drop editor alert prahů přímo v grafu. Backend má i testy —
-unit (Mockito) i integrační (Testcontainers, reálný PostgreSQL + Flyway) —
-a CI pipeline (GitHub Actions: build+test backend, lint+build frontend).
-Retention policy (`RetentionCleanupScheduler`) drží velikost metrik/eventů
-pod kontrolou. Volitelné Slack/Discord webhook notifikace při alertu
-(`WEBHOOK_URL` env proměnná). Sidebar má nastavitelný branding (název,
-barva) a badge s počtem aktivních alertů, Dashboard žebříček služeb podle
-response time/chybovosti/alertů, Settings zobrazuje i aktuální backend
-konfiguraci (`GET /api/v1/system-info`).
+## Stav projektu
+
+Funkční aplikace, ne jen kostra — obě strany mají testy a prošly i ručním
+end-to-end ověřením přes reálný běžící stack.
+
+**Backend**
+- CRUD pro služby a alert pravidla, scheduler sbírající 7 typů metrik
+- Skutečné vyhodnocování alertů (TRIGGERED/RESOLVED) a kurovaná časová osa událostí
+- Stránkované `GET /metrics` a `GET /events` (`PageResponse<T>`, volitelný filtr)
+- Retention policy, co drží velikost metrik/eventů pod kontrolou
+- Unit testy (Mockito) i integrační testy (Testcontainers, reálný PostgreSQL + Flyway)
+- OpenAPI/Swagger UI generované přímo z kódu
+
+**Frontend**
+- Dashboard s grafem, žebříčkem služeb a živým feedem přes SSE
+- Services a Alerts s formuláři, filtrováním a validací chyb z backendu
+- Detail stránka služby (metriky, alerty, historie, uptime badge)
+- Metrics stránka se srovnáním napříč službami, drag-and-drop editor alert prahů
+- Cmd+K command paleta (s klávesnicovou navigací a a11y — focus trap, návrat focusu)
+- Světlý/tmavý/systémový motiv, responsivní layout s mobilní navigací
+- Vitest + React Testing Library testy na klíčovou logiku (formuláře, drag matematika, paleta)
+
+**DevOps**
+- Docker + docker-compose pro celý stack, produkční nginx image pro frontend
+- CI pipeline (GitHub Actions): build+test backend, lint+test+build frontend
+- Volitelné Slack/Discord webhook notifikace při alertu (`WEBHOOK_URL` env proměnná)

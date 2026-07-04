@@ -2,6 +2,7 @@ package com.ondrecreates.monitoringdashboard.exception;
 
 import com.ondrecreates.monitoringdashboard.api.dto.ErrorResponse;
 import java.time.Instant;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -15,6 +16,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse(Instant.now(), HttpStatus.NOT_FOUND.value(), ex.getMessage()));
+    }
+
+    // The only unique constraint in the schema right now is services.name (see V1__init.sql) —
+    // if more get added later, this message should become constraint-specific instead of generic.
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(DataIntegrityViolationException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(
+                        Instant.now(), HttpStatus.CONFLICT.value(), "Služba s tímto názvem už existuje."));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

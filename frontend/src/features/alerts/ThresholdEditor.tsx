@@ -50,6 +50,9 @@ export function ThresholdEditor({
   }, [values, threshold]);
 
   const data = values.map((value, index) => ({ index, value }));
+  // Counts are always whole numbers — without this, Recharts' "nice" auto-tick step
+  // (e.g. 0.75) plus toFixed(0) rounding produces two adjacent ticks reading the same integer.
+  const isIntegerMetric = metricName === "response_time_ms" || metricName === "request_count" || metricName === "error_count";
 
   function updateFromPointer(clientY: number) {
     const container = containerRef.current;
@@ -91,6 +94,7 @@ export function ThresholdEditor({
             domain={[0, domainMax]}
             stroke="var(--muted-foreground)"
             fontSize={10}
+            allowDecimals={!isIntegerMetric}
             tickFormatter={(value) => formatMetricValue(metricName, Number(value))}
           />
           <Line type="monotone" dataKey="value" stroke="#8b5cf6" strokeWidth={2} dot={false} isAnimationActive={false} />

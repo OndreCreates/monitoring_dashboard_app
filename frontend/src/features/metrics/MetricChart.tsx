@@ -45,6 +45,13 @@ export function MetricChart({
   }, [history, liveEvents, serviceId, metricName, chartPoints]);
 
   const latest = data.at(-1)?.value;
+  // health_status is binary (0/1 → DOWN/UP) — Recharts' default auto-ticks land on
+  // intermediate values like 0.33/0.66 too, which formatMetricValue also renders as
+  // "DOWN", producing duplicate stacked labels. Pin the ticks to the two real values.
+  const isHealthStatus = metricName === "health_status";
+  // Counts are always whole numbers — without this, Recharts' "nice" auto-tick step
+  // (e.g. 0.75) plus toFixed(0) rounding produces two adjacent ticks reading the same integer.
+  const isIntegerMetric = metricName === "response_time_ms" || metricName === "request_count" || metricName === "error_count";
 
   return (
     <div className="flex flex-col gap-2 rounded-md border border-border p-4">
@@ -67,6 +74,9 @@ export function MetricChart({
               stroke="var(--muted-foreground)"
               fontSize={10}
               width={60}
+              domain={isHealthStatus ? [0, 1] : undefined}
+              ticks={isHealthStatus ? [0, 1] : undefined}
+              allowDecimals={!isIntegerMetric}
               tickFormatter={(value) => formatMetricValue(metricName, Number(value))}
             />
             <Tooltip

@@ -4,8 +4,8 @@ import { Select } from "@/shared/components/Select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/Tabs";
 import { useServices } from "@/shared/hooks/useServices";
 import { useLiveEvents } from "@/shared/hooks/useLiveEvents";
-import { MetricChart } from "@/features/metrics/MetricChart";
 import { ServiceComparisonChart } from "@/shared/components/ServiceComparisonChart";
+import { MetricsGrid } from "@/shared/components/MetricsGrid";
 import { METRICS } from "@/shared/constants/metrics";
 
 export function MetricsPage() {
@@ -56,19 +56,7 @@ export function MetricsPage() {
               </CardContent>
             </Card>
 
-            {selectedId !== undefined && (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {METRICS.map((metric) => (
-                  <MetricChart
-                    key={metric.name}
-                    serviceId={selectedId}
-                    metricName={metric.name}
-                    label={metric.label}
-                    liveEvents={metricEvents}
-                  />
-                ))}
-              </div>
-            )}
+            {selectedId !== undefined && <MetricsGrid serviceId={selectedId} liveEvents={metricEvents} />}
           </TabsContent>
 
           <TabsContent value="comparison" className="mt-6 flex flex-col gap-6">

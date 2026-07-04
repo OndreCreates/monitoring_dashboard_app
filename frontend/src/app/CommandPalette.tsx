@@ -19,6 +19,8 @@ export function CommandPalette() {
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const openRef = useRef(false);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const navigate = useNavigate();
   const { services } = useServices();
 
@@ -48,20 +50,34 @@ export function CommandPalette() {
   }, [items, query]);
 
   function openPalette() {
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
     setQuery("");
     setActiveIndex(0);
     setOpen(true);
   }
 
+  function closePalette() {
+    setOpen(false);
+  }
+
+  useEffect(() => {
+    openRef.current = open;
+    // Return focus to whatever triggered the palette (Cmd+K target or a search button) —
+    // otherwise focus silently drops to <body> and keyboard users lose their place.
+    // Refs are only read here, inside an effect, never inline in a JSX event handler —
+    // that pattern trips react-hooks/refs (it can't prove a wrapped callback never runs during render).
+    if (!open) previouslyFocusedRef.current?.focus();
+  }, [open]);
+
   useEffect(() => {
     function handleGlobalKeyDown(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        setOpen((prev) => {
-          if (prev) return false;
+        if (openRef.current) {
+          closePalette();
+        } else {
           openPalette();
-          return true;
-        });
+        }
       }
     }
     window.addEventListener("keydown", handleGlobalKeyDown);
@@ -78,11 +94,6 @@ export function CommandPalette() {
     if (open) requestAnimationFrame(() => inputRef.current?.focus());
   }, [open]);
 
-  function select(item: PaletteItem) {
-    navigate(item.to);
-    setOpen(false);
-  }
-
   function handleQueryChange(value: string) {
     setQuery(value);
     setActiveIndex(0);
@@ -90,7 +101,12 @@ export function CommandPalette() {
 
   function handleKeyDown(event: React.KeyboardEvent) {
     if (event.key === "Escape") {
-      setOpen(false);
+      closePalette();
+    } else if (event.key === "Tab") {
+      // The input is the only focusable element we manage here — list items are
+      // chosen via Arrow keys + Enter/click, not Tab — so Tab must not leak focus
+      // out to the page behind the modal.
+      event.preventDefault();
     } else if (event.key === "ArrowDown") {
       event.preventDefault();
       setActiveIndex((index) => Math.min(index + 1, filtered.length - 1));
@@ -98,15 +114,19 @@ export function CommandPalette() {
       event.preventDefault();
       setActiveIndex((index) => Math.max(index - 1, 0));
     } else if (event.key === "Enter" && filtered[activeIndex]) {
-      select(filtered[activeIndex]);
+      navigate(filtered[activeIndex].to);
+      closePalette();
     }
   }
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 pt-24" onClick={() => setOpen(false)}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 pt-24" onClick={closePalette}>
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Příkazová paleta"
         className="w-full max-w-lg rounded-xl border border-border bg-card shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
@@ -116,6 +136,7 @@ export function CommandPalette() {
           onChange={(event) => handleQueryChange(event.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Hledat stránku nebo službu…"
+          aria-label="Hledat stránku nebo službu"
           className="w-full border-b border-border bg-transparent px-4 py-3 text-sm outline-none placeholder:text-muted-foreground"
         />
         <ul className="max-h-80 overflow-y-auto p-2">
@@ -126,7 +147,10 @@ export function CommandPalette() {
               <li key={item.key}>
                 <button
                   type="button"
-                  onClick={() => select(item)}
+                  onClick={() => {
+                    navigate(item.to);
+                    closePalette();
+                  }}
                   onMouseEnter={() => setActiveIndex(index)}
                   className={cn(
                     "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm",

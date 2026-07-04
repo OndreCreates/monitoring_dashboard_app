@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/Ca
 import { Badge } from "@/shared/components/Badge";
 import { fetchRecentEvents } from "@/api/events";
 import { useLiveEvents } from "@/shared/hooks/useLiveEvents";
+import { formatEventType } from "@/shared/utils/formatStatus";
 import type { EventResponse, EventType } from "@/api/types";
 
 const EVENT_BADGE_VARIANT: Record<EventType, "success" | "destructive" | "secondary"> = {
@@ -63,7 +64,7 @@ export function EventsPage() {
                   key={event.id}
                   className="flex items-center justify-between rounded-md border border-border px-3 py-2"
                 >
-                  <Badge variant={EVENT_BADGE_VARIANT[event.type]}>{event.type}</Badge>
+                  <Badge variant={EVENT_BADGE_VARIANT[event.type]}>{formatEventType(event.type)}</Badge>
                   <span className="font-medium">{event.serviceName}</span>
                   <span className="flex-1 px-3 text-muted-foreground">{event.message}</span>
                   <span className="text-xs text-muted-foreground">

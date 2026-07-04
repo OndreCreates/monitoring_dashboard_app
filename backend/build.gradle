@@ -38,6 +38,10 @@ dependencies {
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-database-postgresql'
 
+    // API dokumentace — generuje OpenAPI schéma z existujících @RestController/DTO
+    // bez ruční údržby, plus živé Swagger UI na /swagger-ui.html
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+
     // Boilerplate reduction / mapping
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
