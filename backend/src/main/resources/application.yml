@@ -15,7 +15,9 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info
+        # "metrics" exposed (same as demo-services/*) so the scheduler can poll the
+        # backend's own /actuator/metrics/{name} — see V5__seed_self_monitoring.sql.
+        include: health, info, metrics
   endpoint:
     health:
       show-details: when-authorized
