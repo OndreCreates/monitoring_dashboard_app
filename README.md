@@ -27,6 +27,8 @@ takže to, co vidíš, je opravdový monitoring loop, ne mockovaná data.
   alert prahů přímo v grafu, světlý/tmavý/systémový motiv, plně responsivní layout.
 - **Nastavitelné branding** — název appky a barva motivu v Settings, uložené lokálně.
 
+![Cmd+K command paleta — hledání a navigace napříč stránkami i službami](docs/screenshots/command-palette-demo.gif)
+
 ## Architektura
 
 ```mermaid
