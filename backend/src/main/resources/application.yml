@@ -40,3 +40,8 @@ retention:
 webhook:
   url: ${WEBHOOK_URL:}
   format: ${WEBHOOK_FORMAT:slack}
+
+# Optional API key gate for mutating requests (see security/ApiKeyFilter.java).
+# Empty disables it — same opt-in-via-env pattern as the webhook above.
+security:
+  api-key: ${API_KEY:}

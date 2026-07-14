@@ -26,6 +26,9 @@ services:
       # so it comes from the shell env, never committed to .env or the repo.
       WEBHOOK_URL: ${WEBHOOK_URL:-}
       WEBHOOK_FORMAT: ${WEBHOOK_FORMAT:-slack}
+      # Optional API key gate for POST/PUT/DELETE — empty leaves the API open
+      # (default, frictionless local/demo use). See ApiKeyFilter.
+      API_KEY: ${API_KEY:-}
     ports:
       - "8080:8080"
     depends_on:

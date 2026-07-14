@@ -3,6 +3,15 @@
 Konvence: všechny endpointy pod `/api/v1/...`, JSON, chyby ve formátu
 `{ timestamp, status, message }` (viz `GlobalExceptionHandler`).
 
+## Autentizace
+
+`GET` je vždy otevřené. `POST`/`PUT`/`DELETE` jsou chráněné volitelným
+API klíčem (`ApiKeyFilter`) — pokud backend běží s nastavenou env proměnnou
+`API_KEY`, musí každý mutační request nést hlavičku `X-API-Key` se stejnou
+hodnotou, jinak dostane `401`. Bez nastaveného `API_KEY` (výchozí stav pro
+lokální/demo použití) je API zcela otevřené, stejný opt-in vzor jako u
+webhook notifikací níže.
+
 Stránkované endpointy (metriky, eventy) vrací `PageResponse<T>` místo raw
 Spring `Page` JSON:
 

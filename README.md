@@ -112,6 +112,9 @@ end-to-end ověřením přes reálný běžící stack.
 - Retention policy, co drží velikost metrik/eventů pod kontrolou
 - Unit testy (Mockito) i integrační testy (Testcontainers, reálný PostgreSQL + Flyway)
 - OpenAPI/Swagger UI generované přímo z kódu
+- Volitelný API klíč (`X-API-Key`) na mutačních endpointech — bez nastaveného
+  `API_KEY` je API otevřené (lokální/demo použití), `GET` je otevřené vždy
+- Self-monitoring — backend sleduje i sám sebe stejnou cestou jako demo služby
 
 **Frontend**
 - Dashboard s grafem, žebříčkem služeb a živým feedem přes SSE
